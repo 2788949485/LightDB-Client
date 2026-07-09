@@ -18,6 +18,7 @@ public partial class ConnectionForm : Form
             ? new DbConnectionConfig { DbType = "sqlite" }
             : Clone(existing);
         LoadFromModel();
+        ApplyTheme();
     }
 
     private static DbConnectionConfig Clone(DbConnectionConfig config)
@@ -159,6 +160,31 @@ public partial class ConnectionForm : Form
 
         provider.TestConnection(config, password);
         MessageBox.Show("连接测试成功。", "提示");
+    }
+
+    private void ApplyTheme()
+    {
+        BackColor = Color.FromArgb(245, 247, 250);
+        Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+
+        foreach (var button in new[] { btnTest, btnSave, btnConnect })
+        {
+            button.FlatStyle = FlatStyle.Flat;
+            button.FlatAppearance.BorderSize = 0;
+            button.BackColor = Color.FromArgb(37, 99, 235);
+            button.ForeColor = Color.White;
+            button.Padding = new Padding(10, 4, 10, 4);
+        }
+
+        btnCancel.FlatStyle = FlatStyle.Flat;
+        btnCancel.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+        btnCancel.BackColor = Color.White;
+        btnCancel.ForeColor = Color.FromArgb(51, 65, 85);
+
+        btnBrowse.FlatStyle = FlatStyle.Flat;
+        btnBrowse.FlatAppearance.BorderColor = Color.FromArgb(191, 219, 254);
+        btnBrowse.BackColor = Color.White;
+        btnBrowse.ForeColor = Color.FromArgb(30, 64, 175);
     }
 
     private void cboDbType_SelectedIndexChanged(object? sender, EventArgs e)

@@ -1,6 +1,7 @@
 # 构建产物 / 中间文件(每次构建重新生成)
 [Bb]in/
 [Oo]bj/
+[Pp]ublish/
 
 # Visual Studio 个人设置与临时文件
 .vs/

@@ -91,6 +91,14 @@ public class MySqlProvider : IDatabaseProvider
         return $"SELECT * FROM {IdentifierQuoteHelper.QuoteMySql(tableName)} LIMIT {limit};";
     }
 
+    public string BuildPagedPreviewSql(string tableName, int page, int pageSize)
+    {
+        var safePage = Math.Max(page, 1);
+        var safePageSize = Math.Max(pageSize, 1);
+        var offset = (safePage - 1) * safePageSize;
+        return $"SELECT * FROM {IdentifierQuoteHelper.QuoteMySql(tableName)} LIMIT {safePageSize} OFFSET {offset};";
+    }
+
     private static MySqlConnection CreateConnection(DbConnectionConfig config, string password)
     {
         var builder = new MySqlConnectionStringBuilder

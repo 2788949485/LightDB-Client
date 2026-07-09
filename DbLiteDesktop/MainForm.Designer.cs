@@ -19,16 +19,24 @@ partial class MainForm
     private TabPage tabColumns = null!;
     private TabPage tabSql = null!;
     private TabPage tabHistory = null!;
+    private TabPage tabPreview = null!;
     private DataGridView gridColumns = null!;
     private DataGridView gridResults = null!;
     private DataGridView gridHistory = null!;
+    private DataGridView gridPreview = null!;
     private TextBox txtSql = null!;
     private FlowLayoutPanel sqlButtonPanel = null!;
+    private FlowLayoutPanel previewButtonPanel = null!;
     private Button btnRunSql = null!;
     private Button btnClearSql = null!;
     private Button btnCopySql = null!;
+    private Button btnPrevPage = null!;
+    private Button btnNextPage = null!;
     private Label lblStatus = null!;
+    private Label lblPreviewPage = null!;
+    private Label lblPreviewTip = null!;
     private TableLayoutPanel sqlLayout = null!;
+    private TableLayoutPanel previewLayout = null!;
 
     protected override void Dispose(bool disposing)
     {
@@ -67,6 +75,14 @@ partial class MainForm
         btnCopySql = new Button();
         gridResults = new DataGridView();
         lblStatus = new Label();
+        tabPreview = new TabPage();
+        previewLayout = new TableLayoutPanel();
+        gridPreview = new DataGridView();
+        previewButtonPanel = new FlowLayoutPanel();
+        btnPrevPage = new Button();
+        btnNextPage = new Button();
+        lblPreviewPage = new Label();
+        lblPreviewTip = new Label();
         tabHistory = new TabPage();
         gridHistory = new DataGridView();
         toolStrip.SuspendLayout();
@@ -143,6 +159,7 @@ partial class MainForm
         // tabMain
         //
         tabMain.Controls.Add(tabColumns);
+        tabMain.Controls.Add(tabPreview);
         tabMain.Controls.Add(tabSql);
         tabMain.Controls.Add(tabHistory);
         tabMain.Dock = DockStyle.Fill;
@@ -225,6 +242,57 @@ partial class MainForm
         lblStatus.Dock = DockStyle.Fill;
         lblStatus.Text = "未连接";
         lblStatus.TextAlign = ContentAlignment.MiddleLeft;
+        //
+        // tabPreview
+        //
+        tabPreview.Controls.Add(previewLayout);
+        tabPreview.Text = "数据预览";
+        tabPreview.Padding = new Padding(6);
+        //
+        // previewLayout
+        //
+        previewLayout.ColumnCount = 1;
+        previewLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        previewLayout.Dock = DockStyle.Fill;
+        previewLayout.RowCount = 2;
+        previewLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
+        previewLayout.Controls.Add(gridPreview, 0, 0);
+        previewLayout.Controls.Add(previewButtonPanel, 0, 1);
+        //
+        // gridPreview
+        //
+        gridPreview.AllowUserToAddRows = false;
+        gridPreview.AllowUserToDeleteRows = false;
+        gridPreview.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
+        gridPreview.Dock = DockStyle.Fill;
+        gridPreview.ReadOnly = true;
+        gridPreview.RowHeadersVisible = false;
+        //
+        // previewButtonPanel
+        //
+        previewButtonPanel.Dock = DockStyle.Fill;
+        previewButtonPanel.FlowDirection = FlowDirection.LeftToRight;
+        previewButtonPanel.WrapContents = false;
+        previewButtonPanel.Controls.Add(btnPrevPage);
+        previewButtonPanel.Controls.Add(btnNextPage);
+        previewButtonPanel.Controls.Add(lblPreviewPage);
+        previewButtonPanel.Controls.Add(lblPreviewTip);
+        //
+        // preview controls
+        //
+        btnPrevPage.Text = "上一页";
+        btnPrevPage.AutoSize = true;
+        btnPrevPage.Click += btnPrevPage_Click;
+        btnNextPage.Text = "下一页";
+        btnNextPage.AutoSize = true;
+        btnNextPage.Click += btnNextPage_Click;
+        lblPreviewPage.AutoSize = true;
+        lblPreviewPage.Margin = new Padding(16, 10, 16, 0);
+        lblPreviewPage.Text = "第 1 页";
+        lblPreviewTip.AutoSize = true;
+        lblPreviewTip.Margin = new Padding(0, 10, 0, 0);
+        lblPreviewTip.Text = "每页 100 条";
         //
         // tabHistory
         //

@@ -8,16 +8,20 @@ namespace DbLiteDesktop;
 
 public partial class MainForm : Form
 {
+    private const int PreviewPageSize = 100;
     private readonly ConfigService _configService = new();
     private readonly PasswordEncryptService _passwordEncryptService = new();
     private readonly SqlGuardService _sqlGuardService = new();
     private QueryHistoryService _queryHistoryService = null!;
     private DbConnectionConfig? _currentConfig;
+    private string? _currentPreviewTableName;
+    private int _currentPreviewPage = 1;
 
     public MainForm()
     {
         InitializeComponent();
         InitializeServices();
+        ApplyTheme();
     }
 
     private void InitializeServices()
@@ -167,11 +171,39 @@ public partial class MainForm : Form
             gridColumns.DataSource = null;
             gridColumns.DataSource = columns;
             txtSql.Text = provider.BuildPreviewSql(tableName, 100);
-            tabMain.SelectedTab = tabColumns;
+            _currentPreviewTableName = tableName;
+            _currentPreviewPage = 1;
+            LoadPreviewPage();
         }
         catch (Exception ex)
         {
             MessageBox.Show(ex.Message, "读取字段失败");
+        }
+    }
+
+    private void LoadPreviewPage()
+    {
+        if (_currentConfig is null || string.IsNullOrWhiteSpace(_currentPreviewTableName))
+        {
+            return;
+        }
+
+        try
+        {
+            var provider = DatabaseProviderFactory.Create(_currentConfig.DbType);
+            var sql = provider.BuildPagedPreviewSql(_currentPreviewTableName, _currentPreviewPage, PreviewPageSize);
+            var result = provider.ExecuteQuery(_currentConfig, GetPassword(_currentConfig), sql, PreviewPageSize);
+
+            gridPreview.DataSource = null;
+            gridPreview.DataSource = result;
+            lblPreviewPage.Text = $"第 {_currentPreviewPage} 页";
+            btnPrevPage.Enabled = _currentPreviewPage > 1;
+            btnNextPage.Enabled = result.Rows.Count >= PreviewPageSize;
+            tabMain.SelectedTab = tabPreview;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "加载数据预览失败");
         }
     }
 
@@ -253,10 +285,84 @@ public partial class MainForm : Form
     private void Disconnect()
     {
         _currentConfig = null;
+        _currentPreviewTableName = null;
+        _currentPreviewPage = 1;
         treeTables.Nodes.Clear();
         gridColumns.DataSource = null;
         gridResults.DataSource = null;
+        gridPreview.DataSource = null;
+        lblPreviewPage.Text = "第 1 页";
         lblStatus.Text = "未连接";
+    }
+
+    private void ApplyTheme()
+    {
+        BackColor = Color.FromArgb(245, 247, 250);
+        Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+
+        toolStrip.BackColor = Color.White;
+        toolStrip.GripStyle = ToolStripGripStyle.Hidden;
+        toolStrip.Padding = new Padding(8, 4, 8, 4);
+        toolStrip.RenderMode = ToolStripRenderMode.System;
+
+        splitContainer.BackColor = Color.FromArgb(226, 232, 240);
+        treeTables.BackColor = Color.White;
+        treeTables.BorderStyle = BorderStyle.None;
+
+        tabMain.Appearance = TabAppearance.Normal;
+
+        StyleGrid(gridColumns);
+        StyleGrid(gridResults);
+        StyleGrid(gridHistory);
+        StyleGrid(gridPreview);
+
+        StyleActionButton(btnRunSql);
+        StyleActionButton(btnPrevPage);
+        StyleActionButton(btnNextPage);
+        StyleGhostButton(btnClearSql);
+        StyleGhostButton(btnCopySql);
+
+        lblStatus.BackColor = Color.White;
+        lblStatus.ForeColor = Color.FromArgb(71, 85, 105);
+        lblPreviewTip.ForeColor = Color.FromArgb(71, 85, 105);
+    }
+
+    private static void StyleGrid(DataGridView grid)
+    {
+        grid.BackgroundColor = Color.White;
+        grid.BorderStyle = BorderStyle.None;
+        grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+        grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+        grid.EnableHeadersVisualStyles = false;
+        grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(241, 245, 249);
+        grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(15, 23, 42);
+        grid.ColumnHeadersDefaultCellStyle.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+        grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(219, 234, 254);
+        grid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(15, 23, 42);
+        grid.DefaultCellStyle.BackColor = Color.White;
+        grid.DefaultCellStyle.ForeColor = Color.FromArgb(30, 41, 59);
+        grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 250, 252);
+    }
+
+    private static void StyleActionButton(Button button)
+    {
+        button.FlatStyle = FlatStyle.Flat;
+        button.FlatAppearance.BorderSize = 0;
+        button.BackColor = Color.FromArgb(37, 99, 235);
+        button.ForeColor = Color.White;
+        button.Padding = new Padding(10, 4, 10, 4);
+        button.Margin = new Padding(0, 8, 10, 0);
+    }
+
+    private static void StyleGhostButton(Button button)
+    {
+        button.FlatStyle = FlatStyle.Flat;
+        button.FlatAppearance.BorderColor = Color.FromArgb(191, 219, 254);
+        button.FlatAppearance.BorderSize = 1;
+        button.BackColor = Color.White;
+        button.ForeColor = Color.FromArgb(30, 64, 175);
+        button.Padding = new Padding(10, 4, 10, 4);
+        button.Margin = new Padding(0, 8, 10, 0);
     }
 
     private void btnNewConnection_Click(object? sender, EventArgs e)
@@ -357,6 +463,28 @@ public partial class MainForm : Form
         {
             Clipboard.SetText(txtSql.Text);
         }
+    }
+
+    private void btnPrevPage_Click(object? sender, EventArgs e)
+    {
+        if (_currentPreviewPage <= 1)
+        {
+            return;
+        }
+
+        _currentPreviewPage--;
+        LoadPreviewPage();
+    }
+
+    private void btnNextPage_Click(object? sender, EventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_currentPreviewTableName))
+        {
+            return;
+        }
+
+        _currentPreviewPage++;
+        LoadPreviewPage();
     }
 
     private void gridHistory_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)

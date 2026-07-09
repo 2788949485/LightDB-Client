@@ -1,0 +1,30 @@
+# 构建产物 / 中间文件(每次构建重新生成)
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio 个人设置与临时文件
+.vs/
+*.user
+*.suo
+*.userprefs
+
+# 测试结果与覆盖率
+[Tt]est[Rr]esult*/
+*.coverage
+*.coveragexml
+
+# NuGet 二进制包
+*.nupkg
+*.snupkg
+
+# NuGet.Config:仅含本机全局包路径(E:\nuget\packages),不随源码分发
+NuGet.Config
+
+# IDE: JetBrains Rider
+.idea/
+
+# 日志
+*.log
+
+# Claude Code 本地个人设置(权限/偏好,不随源码分发)
+.claude/settings.local.json

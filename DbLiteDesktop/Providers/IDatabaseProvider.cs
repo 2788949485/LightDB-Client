@@ -11,4 +11,13 @@ public interface IDatabaseProvider
     DataTable ExecuteQuery(DbConnectionConfig config, string password, string sql, int maxRows = 1000);
     string BuildPreviewSql(string tableName, int limit = 100);
     string BuildPagedPreviewSql(string tableName, int page, int pageSize);
+    string BuildFilteredPreviewSql(
+        string tableName,
+        IReadOnlyList<string> columns,
+        string? selectedColumn,
+        string keyword,
+        bool exactMatch,
+        int page,
+        int pageSize
+    );
 }

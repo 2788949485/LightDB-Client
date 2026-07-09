@@ -3,19 +3,24 @@ using DbLiteDesktop.Forms;
 using DbLiteDesktop.Models;
 using DbLiteDesktop.Providers;
 using DbLiteDesktop.Services;
+using DbLiteDesktop.Utils;
 
 namespace DbLiteDesktop;
 
 public partial class MainForm : Form
 {
     private const int PreviewPageSize = 100;
+    private const string AllFieldsOption = "全部字段";
     private readonly ConfigService _configService = new();
     private readonly PasswordEncryptService _passwordEncryptService = new();
     private readonly SqlGuardService _sqlGuardService = new();
+    private readonly ContextMenuStrip _previewCopyMenu = new();
     private QueryHistoryService _queryHistoryService = null!;
     private DbConnectionConfig? _currentConfig;
     private string? _currentPreviewTableName;
     private int _currentPreviewPage = 1;
+    private List<string> _currentPreviewColumns = [];
+    private string _previewCopyText = string.Empty;
 
     public MainForm()
     {
@@ -29,8 +34,37 @@ public partial class MainForm : Form
         _configService.Initialize();
         _queryHistoryService = new QueryHistoryService(_configService.DatabasePath);
         _queryHistoryService.Initialize();
+        InitializePreviewSearch();
+        InitializePreviewCopyMenu();
         LoadConnections();
         LoadHistory();
+    }
+
+    private void InitializePreviewSearch()
+    {
+        cboPreviewMatch.Items.Clear();
+        cboPreviewMatch.Items.AddRange(["包含", "精确"]);
+        cboPreviewMatch.SelectedIndex = 0;
+
+        cboPreviewField.Items.Clear();
+        cboPreviewField.Items.Add(AllFieldsOption);
+        cboPreviewField.SelectedIndex = 0;
+    }
+
+    private void InitializePreviewCopyMenu()
+    {
+        var copyItem = new ToolStripMenuItem("复制");
+        copyItem.Click += (_, _) =>
+        {
+            if (!string.IsNullOrEmpty(_previewCopyText))
+            {
+                Clipboard.SetText(_previewCopyText);
+            }
+        };
+
+        _previewCopyMenu.Items.Clear();
+        _previewCopyMenu.Items.Add(copyItem);
+        gridPreview.MouseDown += gridPreview_MouseDown;
     }
 
     private void LoadConnections()
@@ -170,15 +204,32 @@ public partial class MainForm : Form
 
             gridColumns.DataSource = null;
             gridColumns.DataSource = columns;
+            _currentPreviewColumns = columns.Select(column => column.Name).Where(name => !string.IsNullOrWhiteSpace(name)).ToList();
+            BindPreviewFields();
             txtSql.Text = provider.BuildPreviewSql(tableName, 100);
             _currentPreviewTableName = tableName;
             _currentPreviewPage = 1;
+            txtPreviewKeyword.Clear();
+            cboPreviewMatch.SelectedIndex = 0;
             LoadPreviewPage();
         }
         catch (Exception ex)
         {
             MessageBox.Show(ex.Message, "读取字段失败");
         }
+    }
+
+    private void BindPreviewFields()
+    {
+        cboPreviewField.Items.Clear();
+        cboPreviewField.Items.Add(AllFieldsOption);
+
+        foreach (var column in _currentPreviewColumns)
+        {
+            cboPreviewField.Items.Add(column);
+        }
+
+        cboPreviewField.SelectedIndex = 0;
     }
 
     private void LoadPreviewPage()
@@ -191,7 +242,7 @@ public partial class MainForm : Form
         try
         {
             var provider = DatabaseProviderFactory.Create(_currentConfig.DbType);
-            var sql = provider.BuildPagedPreviewSql(_currentPreviewTableName, _currentPreviewPage, PreviewPageSize);
+            var sql = BuildPreviewSql(provider);
             var result = provider.ExecuteQuery(_currentConfig, GetPassword(_currentConfig), sql, PreviewPageSize);
 
             gridPreview.DataSource = null;
@@ -205,6 +256,51 @@ public partial class MainForm : Form
         {
             MessageBox.Show(ex.Message, "加载数据预览失败");
         }
+    }
+
+    private string BuildPreviewSql(IDatabaseProvider provider)
+    {
+        if (string.IsNullOrWhiteSpace(_currentPreviewTableName))
+        {
+            return string.Empty;
+        }
+
+        var selectedColumn = cboPreviewField.SelectedItem?.ToString();
+        if (string.Equals(selectedColumn, AllFieldsOption, StringComparison.Ordinal))
+        {
+            selectedColumn = null;
+        }
+
+        var parseResult = PreviewSearchInputParser.Parse(
+            txtPreviewKeyword.Text,
+            _currentPreviewColumns,
+            selectedColumn,
+            string.Equals(cboPreviewMatch.SelectedItem?.ToString(), "精确", StringComparison.Ordinal)
+        );
+
+        if (!parseResult.Success)
+        {
+            throw new InvalidOperationException(parseResult.ErrorMessage);
+        }
+
+        if (string.IsNullOrWhiteSpace(parseResult.Keyword))
+        {
+            return provider.BuildPagedPreviewSql(_currentPreviewTableName, _currentPreviewPage, PreviewPageSize);
+        }
+
+        var exactMatch = parseResult.FieldName is not null
+            ? true
+            : parseResult.ExactMatch;
+
+        return provider.BuildFilteredPreviewSql(
+            _currentPreviewTableName,
+            _currentPreviewColumns,
+            parseResult.FieldName,
+            parseResult.Keyword,
+            exactMatch,
+            _currentPreviewPage,
+            PreviewPageSize
+        );
     }
 
     private void RunSql()
@@ -287,12 +383,17 @@ public partial class MainForm : Form
         _currentConfig = null;
         _currentPreviewTableName = null;
         _currentPreviewPage = 1;
+        _currentPreviewColumns = [];
         treeTables.Nodes.Clear();
         gridColumns.DataSource = null;
         gridResults.DataSource = null;
         gridPreview.DataSource = null;
         lblPreviewPage.Text = "第 1 页";
         lblStatus.Text = "未连接";
+        txtPreviewKeyword.Clear();
+        cboPreviewField.Items.Clear();
+        cboPreviewField.Items.Add(AllFieldsOption);
+        cboPreviewField.SelectedIndex = 0;
     }
 
     private void ApplyTheme()
@@ -308,8 +409,10 @@ public partial class MainForm : Form
         splitContainer.BackColor = Color.FromArgb(226, 232, 240);
         treeTables.BackColor = Color.White;
         treeTables.BorderStyle = BorderStyle.None;
+        treeTables.Font = new Font("Microsoft YaHei UI", 9.5F, FontStyle.Regular, GraphicsUnit.Point);
 
         tabMain.Appearance = TabAppearance.Normal;
+        tabMain.Padding = new Point(14, 6);
 
         StyleGrid(gridColumns);
         StyleGrid(gridResults);
@@ -319,12 +422,25 @@ public partial class MainForm : Form
         StyleActionButton(btnRunSql);
         StyleActionButton(btnPrevPage);
         StyleActionButton(btnNextPage);
+        StyleActionButton(btnApplyPreviewFilter);
         StyleGhostButton(btnClearSql);
         StyleGhostButton(btnCopySql);
+        StyleGhostButton(btnResetPreviewFilter);
 
         lblStatus.BackColor = Color.White;
         lblStatus.ForeColor = Color.FromArgb(71, 85, 105);
         lblPreviewTip.ForeColor = Color.FromArgb(71, 85, 105);
+        previewSearchPanel.BackColor = Color.White;
+        previewSearchPanel.Margin = new Padding(0);
+        previewButtonPanel.BackColor = Color.White;
+        sqlButtonPanel.BackColor = Color.White;
+
+        StyleComboBox(cboPreviewField);
+        StyleComboBox(cboPreviewMatch);
+        StyleTextInput(txtPreviewKeyword);
+        StyleTextInput(txtSql);
+
+        AlignPreviewSearchControls();
     }
 
     private static void StyleGrid(DataGridView grid)
@@ -363,6 +479,35 @@ public partial class MainForm : Form
         button.ForeColor = Color.FromArgb(30, 64, 175);
         button.Padding = new Padding(10, 4, 10, 4);
         button.Margin = new Padding(0, 8, 10, 0);
+    }
+
+    private static void StyleComboBox(ComboBox comboBox)
+    {
+        comboBox.FlatStyle = FlatStyle.Flat;
+        comboBox.BackColor = Color.White;
+        comboBox.ForeColor = Color.FromArgb(30, 41, 59);
+    }
+
+    private static void StyleTextInput(TextBox textBox)
+    {
+        textBox.BorderStyle = BorderStyle.FixedSingle;
+        textBox.BackColor = Color.White;
+        textBox.ForeColor = Color.FromArgb(15, 23, 42);
+    }
+
+    private void AlignPreviewSearchControls()
+    {
+        previewSearchPanel.Height = 38;
+
+        cboPreviewField.Height = 32;
+        cboPreviewMatch.Height = 32;
+        txtPreviewKeyword.Height = 32;
+
+        btnApplyPreviewFilter.AutoSize = false;
+        btnApplyPreviewFilter.Height = 32;
+
+        btnResetPreviewFilter.AutoSize = false;
+        btnResetPreviewFilter.Height = 32;
     }
 
     private void btnNewConnection_Click(object? sender, EventArgs e)
@@ -487,6 +632,27 @@ public partial class MainForm : Form
         LoadPreviewPage();
     }
 
+    private void btnApplyPreviewFilter_Click(object? sender, EventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(_currentPreviewTableName))
+        {
+            MessageBox.Show("请先选择表。", "提示");
+            return;
+        }
+
+        _currentPreviewPage = 1;
+        LoadPreviewPage();
+    }
+
+    private void btnResetPreviewFilter_Click(object? sender, EventArgs e)
+    {
+        txtPreviewKeyword.Clear();
+        cboPreviewField.SelectedIndex = 0;
+        cboPreviewMatch.SelectedIndex = 0;
+        _currentPreviewPage = 1;
+        LoadPreviewPage();
+    }
+
     private void gridHistory_CellDoubleClick(object? sender, DataGridViewCellEventArgs e)
     {
         if (e.RowIndex < 0)
@@ -498,6 +664,30 @@ public partial class MainForm : Form
         {
             txtSql.Text = item.SqlText;
             tabMain.SelectedTab = tabSql;
+        }
+    }
+
+    private void gridPreview_MouseDown(object? sender, MouseEventArgs e)
+    {
+        if (e.Button != MouseButtons.Right)
+        {
+            return;
+        }
+
+        var hit = gridPreview.HitTest(e.X, e.Y);
+
+        if (hit.Type == DataGridViewHitTestType.ColumnHeader && hit.ColumnIndex >= 0)
+        {
+            _previewCopyText = gridPreview.Columns[hit.ColumnIndex].HeaderText;
+            _previewCopyMenu.Show(gridPreview, new Point(e.X, e.Y));
+            return;
+        }
+
+        if (hit.Type == DataGridViewHitTestType.Cell && hit.RowIndex >= 0 && hit.ColumnIndex >= 0)
+        {
+            var value = gridPreview.Rows[hit.RowIndex].Cells[hit.ColumnIndex].Value;
+            _previewCopyText = value?.ToString() ?? string.Empty;
+            _previewCopyMenu.Show(gridPreview, new Point(e.X, e.Y));
         }
     }
 }

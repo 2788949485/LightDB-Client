@@ -104,6 +104,33 @@ public class SQLiteProvider : IDatabaseProvider
         return $"SELECT * FROM {IdentifierQuoteHelper.QuoteSQLite(tableName)} LIMIT {safePageSize} OFFSET {offset};";
     }
 
+    public string BuildFilteredPreviewSql(
+        string tableName,
+        IReadOnlyList<string> columns,
+        string? selectedColumn,
+        string keyword,
+        bool exactMatch,
+        int page,
+        int pageSize
+    )
+    {
+        var safePage = Math.Max(page, 1);
+        var safePageSize = Math.Max(pageSize, 1);
+        var offset = (safePage - 1) * safePageSize;
+        var escapedKeyword = keyword.Replace("'", "''");
+        var operatorText = exactMatch ? "=" : "LIKE";
+        var valueText = exactMatch ? $"'{escapedKeyword}'" : $"'%{escapedKeyword}%'";
+        var targetColumns = string.IsNullOrWhiteSpace(selectedColumn)
+            ? columns
+            : columns.Where(column => string.Equals(column, selectedColumn, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        var conditions = targetColumns
+            .Select(column => $"CAST({IdentifierQuoteHelper.QuoteSQLite(column)} AS TEXT) {operatorText} {valueText}");
+
+        return
+            $"SELECT * FROM {IdentifierQuoteHelper.QuoteSQLite(tableName)} WHERE {string.Join(" OR ", conditions)} LIMIT {safePageSize} OFFSET {offset};";
+    }
+
     private static SqliteConnection CreateConnection(DbConnectionConfig config)
     {
         return new($"Data Source={config.FilePath}");

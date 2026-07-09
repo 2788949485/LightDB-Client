@@ -25,18 +25,27 @@ partial class MainForm
     private DataGridView gridHistory = null!;
     private DataGridView gridPreview = null!;
     private TextBox txtSql = null!;
+    private TextBox txtPreviewKeyword = null!;
     private FlowLayoutPanel sqlButtonPanel = null!;
     private FlowLayoutPanel previewButtonPanel = null!;
+    private TableLayoutPanel previewSearchPanel = null!;
     private Button btnRunSql = null!;
     private Button btnClearSql = null!;
     private Button btnCopySql = null!;
     private Button btnPrevPage = null!;
     private Button btnNextPage = null!;
+    private Button btnApplyPreviewFilter = null!;
+    private Button btnResetPreviewFilter = null!;
     private Label lblStatus = null!;
     private Label lblPreviewPage = null!;
     private Label lblPreviewTip = null!;
+    private Label lblPreviewField = null!;
+    private Label lblPreviewMatch = null!;
+    private Label lblPreviewKeyword = null!;
     private TableLayoutPanel sqlLayout = null!;
     private TableLayoutPanel previewLayout = null!;
+    private ComboBox cboPreviewField = null!;
+    private ComboBox cboPreviewMatch = null!;
 
     protected override void Dispose(bool disposing)
     {
@@ -77,6 +86,15 @@ partial class MainForm
         lblStatus = new Label();
         tabPreview = new TabPage();
         previewLayout = new TableLayoutPanel();
+        previewSearchPanel = new TableLayoutPanel();
+        lblPreviewField = new Label();
+        cboPreviewField = new ComboBox();
+        lblPreviewMatch = new Label();
+        cboPreviewMatch = new ComboBox();
+        lblPreviewKeyword = new Label();
+        txtPreviewKeyword = new TextBox();
+        btnApplyPreviewFilter = new Button();
+        btnResetPreviewFilter = new Button();
         gridPreview = new DataGridView();
         previewButtonPanel = new FlowLayoutPanel();
         btnPrevPage = new Button();
@@ -254,11 +272,68 @@ partial class MainForm
         previewLayout.ColumnCount = 1;
         previewLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         previewLayout.Dock = DockStyle.Fill;
-        previewLayout.RowCount = 2;
+        previewLayout.RowCount = 3;
+        previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 54F));
         previewLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
-        previewLayout.Controls.Add(gridPreview, 0, 0);
-        previewLayout.Controls.Add(previewButtonPanel, 0, 1);
+        previewLayout.Controls.Add(previewSearchPanel, 0, 0);
+        previewLayout.Controls.Add(gridPreview, 0, 1);
+        previewLayout.Controls.Add(previewButtonPanel, 0, 2);
+        //
+        // previewSearchPanel
+        //
+        previewSearchPanel.ColumnCount = 8;
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 48F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 48F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 36F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96F));
+        previewSearchPanel.Dock = DockStyle.Fill;
+        previewSearchPanel.Padding = new Padding(0, 8, 0, 0);
+        previewSearchPanel.RowCount = 1;
+        previewSearchPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        previewSearchPanel.Controls.Add(lblPreviewField, 0, 0);
+        previewSearchPanel.Controls.Add(cboPreviewField, 1, 0);
+        previewSearchPanel.Controls.Add(lblPreviewMatch, 2, 0);
+        previewSearchPanel.Controls.Add(cboPreviewMatch, 3, 0);
+        previewSearchPanel.Controls.Add(lblPreviewKeyword, 4, 0);
+        previewSearchPanel.Controls.Add(txtPreviewKeyword, 5, 0);
+        previewSearchPanel.Controls.Add(btnApplyPreviewFilter, 6, 0);
+        previewSearchPanel.Controls.Add(btnResetPreviewFilter, 7, 0);
+        //
+        // preview search controls
+        //
+        lblPreviewField.AutoSize = true;
+        lblPreviewField.Anchor = AnchorStyles.Left;
+        lblPreviewField.Margin = new Padding(0, 0, 8, 0);
+        lblPreviewField.Text = "字段";
+        cboPreviewField.DropDownStyle = ComboBoxStyle.DropDownList;
+        cboPreviewField.Dock = DockStyle.Fill;
+        cboPreviewField.Margin = new Padding(0, 0, 12, 0);
+        lblPreviewMatch.AutoSize = true;
+        lblPreviewMatch.Anchor = AnchorStyles.Left;
+        lblPreviewMatch.Margin = new Padding(0, 0, 8, 0);
+        lblPreviewMatch.Text = "匹配";
+        cboPreviewMatch.DropDownStyle = ComboBoxStyle.DropDownList;
+        cboPreviewMatch.Dock = DockStyle.Fill;
+        cboPreviewMatch.Margin = new Padding(0, 0, 12, 0);
+        lblPreviewKeyword.AutoSize = true;
+        lblPreviewKeyword.Anchor = AnchorStyles.Left;
+        lblPreviewKeyword.Margin = new Padding(0, 0, 8, 0);
+        lblPreviewKeyword.Text = "值";
+        txtPreviewKeyword.Dock = DockStyle.Fill;
+        txtPreviewKeyword.Margin = new Padding(0, 0, 12, 0);
+        btnApplyPreviewFilter.Text = "查询";
+        btnApplyPreviewFilter.Dock = DockStyle.Fill;
+        btnApplyPreviewFilter.Margin = new Padding(0, 0, 10, 0);
+        btnApplyPreviewFilter.Click += btnApplyPreviewFilter_Click;
+        btnResetPreviewFilter.Text = "重置";
+        btnResetPreviewFilter.Dock = DockStyle.Fill;
+        btnResetPreviewFilter.Margin = new Padding(0);
+        btnResetPreviewFilter.Click += btnResetPreviewFilter_Click;
         //
         // gridPreview
         //

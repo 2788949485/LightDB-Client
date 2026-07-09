@@ -73,11 +73,11 @@ partial class ConnectionForm
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90F));
         layout.Dock = DockStyle.Fill;
-        layout.Padding = new Padding(12);
+        layout.Padding = new Padding(18, 18, 18, 12);
         layout.RowCount = 8;
         for (var i = 0; i < 7; i++)
         {
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46F));
         }
 
         layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -163,7 +163,7 @@ partial class ConnectionForm
         buttonPanel.Dock = DockStyle.Bottom;
         buttonPanel.FlowDirection = FlowDirection.RightToLeft;
         buttonPanel.AutoSize = true;
-        buttonPanel.Padding = new Padding(12, 0, 12, 12);
+        buttonPanel.Padding = new Padding(18, 6, 18, 16);
 
         btnCancel.Text = "取消";
         btnCancel.AutoSize = true;
@@ -193,7 +193,7 @@ partial class ConnectionForm
         AutoScaleDimensions = new SizeF(7F, 17F);
         AutoScaleMode = AutoScaleMode.Font;
         CancelButton = btnCancel;
-        ClientSize = new Size(560, 390);
+        ClientSize = new Size(580, 412);
         Controls.Add(layout);
         Controls.Add(buttonPanel);
         FormBorderStyle = FormBorderStyle.FixedDialog;

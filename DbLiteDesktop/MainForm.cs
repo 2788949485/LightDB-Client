@@ -27,6 +27,8 @@ public partial class MainForm : Form
         InitializeComponent();
         InitializeServices();
         ApplyTheme();
+        tabMain.DrawItem += tabMain_DrawItem;
+        Shown += (_, _) => ApplyDefaultSplitterDistance();
     }
 
     private void InitializeServices()
@@ -398,47 +400,107 @@ public partial class MainForm : Form
 
     private void ApplyTheme()
     {
-        BackColor = Color.FromArgb(245, 247, 250);
+        var pageBackColor = Color.FromArgb(238, 246, 245);
+        var cardBackColor = Color.White;
+        var accentColor = Color.FromArgb(3, 105, 161);
+        var borderColor = Color.FromArgb(203, 213, 225);
+        var textColor = Color.FromArgb(15, 23, 42);
+        var subtleTextColor = Color.FromArgb(71, 85, 105);
+
+        BackColor = pageBackColor;
         Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
 
-        toolStrip.BackColor = Color.White;
-        toolStrip.GripStyle = ToolStripGripStyle.Hidden;
-        toolStrip.Padding = new Padding(8, 4, 8, 4);
-        toolStrip.RenderMode = ToolStripRenderMode.System;
+        txtPreviewKeyword.PlaceholderText = "输入值，或直接输入 字段名=数据";
+        txtSql.PlaceholderText = "请输入只读 SQL，例如：SELECT * FROM your_table LIMIT 100";
 
-        splitContainer.BackColor = Color.FromArgb(226, 232, 240);
-        treeTables.BackColor = Color.White;
+        lblAppTitle.Font = new Font("Microsoft YaHei UI", 12.5F, FontStyle.Bold, GraphicsUnit.Point);
+        lblAppTitle.ForeColor = textColor;
+        lblAppTitle.Text = "DB Lite Desktop";
+        lblAppTitle.AutoSize = true;
+        lblAppTitle.Location = new Point(0, 12);
+        lblAppSubtitle.Font = new Font("Microsoft YaHei UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point);
+        lblAppSubtitle.ForeColor = subtleTextColor;
+        lblAppSubtitle.Text = string.Empty;
+        lblAppSubtitle.Visible = false;
+
+        lblTablesTitle.Font = new Font("Microsoft YaHei UI", 10.5F, FontStyle.Bold, GraphicsUnit.Point);
+        lblTablesTitle.ForeColor = textColor;
+        lblTablesSubtitle.ForeColor = subtleTextColor;
+        lblTablesSubtitle.Text = "连接成功后显示当前数据库中的表。";
+
+        ApplyPanelChrome(headerPanel, cardBackColor, borderColor);
+        ApplyPanelChrome(navigationPanel, cardBackColor, borderColor);
+        ApplyPanelChrome(workspacePanel, cardBackColor, borderColor);
+        ApplyPanelChrome(headerActionsPanel, Color.Transparent, Color.Transparent);
+
+        lblConnection.ForeColor = subtleTextColor;
+        lblConnection.TextAlign = ContentAlignment.MiddleLeft;
+        StyleComboBox(cboConnections);
+        cboConnections.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+
+        StyleHeaderButton(btnNewConnection, false);
+        StyleHeaderButton(btnEditConnection, false);
+        StyleHeaderButton(btnDeleteConnection, false);
+        StyleHeaderButton(btnTestConnection, false);
+        StyleHeaderButton(btnRefresh, false);
+        StyleHeaderButton(btnConnect, true, accentColor);
+        StyleHeaderButton(btnDisconnect, false);
+
+        splitContainer.BackColor = pageBackColor;
+
+        treeTables.BackColor = cardBackColor;
         treeTables.BorderStyle = BorderStyle.None;
         treeTables.Font = new Font("Microsoft YaHei UI", 9.5F, FontStyle.Regular, GraphicsUnit.Point);
+        treeTables.ForeColor = textColor;
+        treeTables.FullRowSelect = true;
+        treeTables.HotTracking = false;
+        treeTables.Indent = 18;
+        treeTables.ItemHeight = 30;
+        treeTables.ShowLines = false;
+        treeTables.ShowPlusMinus = false;
+        treeTables.ShowRootLines = false;
 
         tabMain.Appearance = TabAppearance.Normal;
-        tabMain.Padding = new Point(14, 6);
+        tabMain.DrawMode = TabDrawMode.OwnerDrawFixed;
+        tabMain.Padding = new Point(12, 8);
+        tabMain.SizeMode = TabSizeMode.Fixed;
 
         StyleGrid(gridColumns);
         StyleGrid(gridResults);
         StyleGrid(gridHistory);
         StyleGrid(gridPreview);
 
-        StyleActionButton(btnRunSql);
+        StyleActionButton(btnRunSql, accentColor);
         StyleActionButton(btnPrevPage);
         StyleActionButton(btnNextPage);
-        StyleActionButton(btnApplyPreviewFilter);
+        StyleActionButton(btnApplyPreviewFilter, accentColor);
         StyleGhostButton(btnClearSql);
         StyleGhostButton(btnCopySql);
         StyleGhostButton(btnResetPreviewFilter);
 
-        lblStatus.BackColor = Color.White;
-        lblStatus.ForeColor = Color.FromArgb(71, 85, 105);
-        lblPreviewTip.ForeColor = Color.FromArgb(71, 85, 105);
-        previewSearchPanel.BackColor = Color.White;
+        lblStatus.BackColor = Color.FromArgb(248, 250, 252);
+        lblStatus.ForeColor = subtleTextColor;
+        lblStatus.Padding = new Padding(12, 0, 0, 0);
+        lblPreviewPage.ForeColor = textColor;
+        lblPreviewTip.ForeColor = subtleTextColor;
+        lblPreviewTip.Text = "支持 字段名=数据";
+
+        previewSearchPanel.BackColor = Color.FromArgb(248, 250, 252);
         previewSearchPanel.Margin = new Padding(0);
         previewButtonPanel.BackColor = Color.White;
         sqlButtonPanel.BackColor = Color.White;
+        sqlLayout.BackColor = cardBackColor;
+        previewLayout.BackColor = cardBackColor;
+        tabMain.BackColor = cardBackColor;
 
         StyleComboBox(cboPreviewField);
         StyleComboBox(cboPreviewMatch);
         StyleTextInput(txtPreviewKeyword);
         StyleTextInput(txtSql);
+        txtSql.BackColor = Color.FromArgb(248, 250, 252);
+        txtSql.ForeColor = textColor;
+        txtSql.BorderStyle = BorderStyle.FixedSingle;
+        txtSql.Margin = new Padding(0, 0, 0, 10);
 
         AlignPreviewSearchControls();
     }
@@ -450,24 +512,32 @@ public partial class MainForm : Form
         grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
         grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
         grid.EnableHeadersVisualStyles = false;
+        grid.GridColor = Color.FromArgb(226, 232, 240);
         grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(241, 245, 249);
         grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(15, 23, 42);
         grid.ColumnHeadersDefaultCellStyle.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+        grid.ColumnHeadersHeight = 40;
+        grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
         grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(219, 234, 254);
         grid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(15, 23, 42);
         grid.DefaultCellStyle.BackColor = Color.White;
         grid.DefaultCellStyle.ForeColor = Color.FromArgb(30, 41, 59);
         grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 250, 252);
+        grid.DefaultCellStyle.Padding = new Padding(6, 4, 6, 4);
+        grid.RowTemplate.Height = 34;
+        grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
     }
 
-    private static void StyleActionButton(Button button)
+    private static void StyleActionButton(Button button, Color? accentColor = null)
     {
         button.FlatStyle = FlatStyle.Flat;
         button.FlatAppearance.BorderSize = 0;
-        button.BackColor = Color.FromArgb(37, 99, 235);
+        button.BackColor = accentColor ?? Color.FromArgb(3, 105, 161);
         button.ForeColor = Color.White;
         button.Padding = new Padding(10, 4, 10, 4);
-        button.Margin = new Padding(0, 8, 10, 0);
+        button.Margin = new Padding(0, 0, 10, 0);
+        button.MinimumSize = new Size(0, 34);
+        button.Cursor = Cursors.Hand;
     }
 
     private static void StyleGhostButton(Button button)
@@ -476,9 +546,40 @@ public partial class MainForm : Form
         button.FlatAppearance.BorderColor = Color.FromArgb(191, 219, 254);
         button.FlatAppearance.BorderSize = 1;
         button.BackColor = Color.White;
-        button.ForeColor = Color.FromArgb(30, 64, 175);
+        button.ForeColor = Color.FromArgb(3, 105, 161);
         button.Padding = new Padding(10, 4, 10, 4);
-        button.Margin = new Padding(0, 8, 10, 0);
+        button.Margin = new Padding(0, 0, 10, 0);
+        button.MinimumSize = new Size(0, 34);
+        button.Cursor = Cursors.Hand;
+    }
+
+    private static void StyleHeaderButton(Button button, bool emphasize, Color? accentColor = null)
+    {
+        button.FlatStyle = FlatStyle.Flat;
+        button.FlatAppearance.BorderSize = emphasize ? 0 : 1;
+        button.FlatAppearance.BorderColor = Color.FromArgb(226, 232, 240);
+        button.Margin = new Padding(0, 0, 6, 0);
+        button.Padding = new Padding(8, 3, 8, 3);
+        button.MinimumSize = new Size(0, 34);
+        button.ForeColor = emphasize ? Color.White : Color.FromArgb(15, 23, 42);
+        button.BackColor = emphasize ? accentColor ?? Color.FromArgb(3, 105, 161) : Color.FromArgb(248, 250, 252);
+        button.Cursor = Cursors.Hand;
+    }
+
+    private static void ApplyPanelChrome(Panel panel, Color backColor, Color borderColor)
+    {
+        panel.BackColor = backColor;
+        panel.Paint += (_, args) =>
+        {
+            if (borderColor == Color.Transparent)
+            {
+                return;
+            }
+
+            using var pen = new Pen(borderColor, 1);
+            var rect = new Rectangle(0, 0, panel.Width - 1, panel.Height - 1);
+            args.Graphics.DrawRectangle(pen, rect);
+        };
     }
 
     private static void StyleComboBox(ComboBox comboBox)
@@ -486,6 +587,7 @@ public partial class MainForm : Form
         comboBox.FlatStyle = FlatStyle.Flat;
         comboBox.BackColor = Color.White;
         comboBox.ForeColor = Color.FromArgb(30, 41, 59);
+        comboBox.IntegralHeight = false;
     }
 
     private static void StyleTextInput(TextBox textBox)
@@ -497,17 +599,60 @@ public partial class MainForm : Form
 
     private void AlignPreviewSearchControls()
     {
-        previewSearchPanel.Height = 38;
+        previewSearchPanel.Height = 54;
 
-        cboPreviewField.Height = 32;
-        cboPreviewMatch.Height = 32;
-        txtPreviewKeyword.Height = 32;
+        cboConnections.Height = 34;
+
+        cboPreviewField.Height = 34;
+        cboPreviewMatch.Height = 34;
+        txtPreviewKeyword.Height = 34;
 
         btnApplyPreviewFilter.AutoSize = false;
-        btnApplyPreviewFilter.Height = 32;
+        btnApplyPreviewFilter.Height = 34;
 
         btnResetPreviewFilter.AutoSize = false;
-        btnResetPreviewFilter.Height = 32;
+        btnResetPreviewFilter.Height = 34;
+    }
+
+    private void ApplyDefaultSplitterDistance()
+    {
+        if (splitContainer.Width <= 0)
+        {
+            return;
+        }
+
+        var target = Math.Min(240, Math.Max(220, splitContainer.Width / 4));
+        var maxAllowed = splitContainer.Width - splitContainer.Panel2MinSize - splitContainer.SplitterWidth;
+        splitContainer.SplitterDistance = Math.Max(splitContainer.Panel1MinSize, Math.Min(target, maxAllowed));
+    }
+
+    private void tabMain_DrawItem(object? sender, DrawItemEventArgs e)
+    {
+        var tabPage = tabMain.TabPages[e.Index];
+        var bounds = e.Bounds;
+        var selected = e.Index == tabMain.SelectedIndex;
+        var backgroundColor = Color.White;
+        var textColor = selected ? Color.FromArgb(3, 105, 161) : Color.FromArgb(51, 65, 85);
+
+        using var background = new SolidBrush(backgroundColor);
+        using var linePen = new Pen(Color.FromArgb(226, 232, 240), 1);
+        using var accentPen = new Pen(Color.FromArgb(3, 105, 161), 3);
+        e.Graphics.FillRectangle(background, bounds);
+        e.Graphics.DrawLine(linePen, bounds.Left, bounds.Bottom - 1, bounds.Right, bounds.Bottom - 1);
+
+        if (selected)
+        {
+            e.Graphics.DrawLine(accentPen, bounds.Left + 10, bounds.Bottom - 2, bounds.Right - 10, bounds.Bottom - 2);
+        }
+
+        TextRenderer.DrawText(
+            e.Graphics,
+            tabPage.Text,
+            new Font("Microsoft YaHei UI", 9F, selected ? FontStyle.Bold : FontStyle.Regular, GraphicsUnit.Point),
+            bounds,
+            textColor,
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter
+        );
     }
 
     private void btnNewConnection_Click(object? sender, EventArgs e)
@@ -690,4 +835,5 @@ public partial class MainForm : Form
             _previewCopyMenu.Show(gridPreview, new Point(e.X, e.Y));
         }
     }
+
 }

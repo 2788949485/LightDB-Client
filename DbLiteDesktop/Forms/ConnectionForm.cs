@@ -164,27 +164,46 @@ public partial class ConnectionForm : Form
 
     private void ApplyTheme()
     {
-        BackColor = Color.FromArgb(245, 247, 250);
+        BackColor = Color.FromArgb(238, 246, 245);
         Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
 
         foreach (var button in new[] { btnTest, btnSave, btnConnect })
         {
             button.FlatStyle = FlatStyle.Flat;
             button.FlatAppearance.BorderSize = 0;
-            button.BackColor = Color.FromArgb(37, 99, 235);
+            button.BackColor = Color.FromArgb(13, 148, 136);
             button.ForeColor = Color.White;
-            button.Padding = new Padding(10, 4, 10, 4);
+            button.Padding = new Padding(14, 6, 14, 6);
+            button.MinimumSize = new Size(0, 36);
+            button.Cursor = Cursors.Hand;
         }
 
         btnCancel.FlatStyle = FlatStyle.Flat;
         btnCancel.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
         btnCancel.BackColor = Color.White;
         btnCancel.ForeColor = Color.FromArgb(51, 65, 85);
+        btnCancel.Padding = new Padding(14, 6, 14, 6);
+        btnCancel.MinimumSize = new Size(0, 36);
+        btnCancel.Cursor = Cursors.Hand;
 
         btnBrowse.FlatStyle = FlatStyle.Flat;
         btnBrowse.FlatAppearance.BorderColor = Color.FromArgb(191, 219, 254);
         btnBrowse.BackColor = Color.White;
-        btnBrowse.ForeColor = Color.FromArgb(30, 64, 175);
+        btnBrowse.ForeColor = Color.FromArgb(15, 118, 110);
+        btnBrowse.Cursor = Cursors.Hand;
+
+        foreach (var textBox in new[] { txtName, txtHost, txtDatabaseName, txtUsername, txtPassword, txtFilePath })
+        {
+            textBox.BorderStyle = BorderStyle.FixedSingle;
+            textBox.BackColor = Color.White;
+            textBox.ForeColor = Color.FromArgb(15, 23, 42);
+        }
+
+        cboDbType.FlatStyle = FlatStyle.Flat;
+        cboDbType.BackColor = Color.White;
+        cboDbType.ForeColor = Color.FromArgb(15, 23, 42);
+        numPort.BackColor = Color.White;
+        numPort.ForeColor = Color.FromArgb(15, 23, 42);
     }
 
     private void cboDbType_SelectedIndexChanged(object? sender, EventArgs e)

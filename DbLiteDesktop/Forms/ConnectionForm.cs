@@ -164,32 +164,32 @@ public partial class ConnectionForm : Form
 
     private void ApplyTheme()
     {
-        BackColor = Color.FromArgb(238, 246, 245);
+        BackColor = Color.FromArgb(243, 244, 246);
         Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
 
         foreach (var button in new[] { btnTest, btnSave, btnConnect })
         {
             button.FlatStyle = FlatStyle.Flat;
             button.FlatAppearance.BorderSize = 0;
-            button.BackColor = Color.FromArgb(13, 148, 136);
+            button.BackColor = Color.FromArgb(3, 105, 161);
             button.ForeColor = Color.White;
-            button.Padding = new Padding(14, 6, 14, 6);
-            button.MinimumSize = new Size(0, 36);
+            button.Padding = new Padding(12, 5, 12, 5);
+            button.MinimumSize = new Size(0, 34);
             button.Cursor = Cursors.Hand;
         }
 
         btnCancel.FlatStyle = FlatStyle.Flat;
-        btnCancel.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+        btnCancel.FlatAppearance.BorderColor = Color.FromArgb(209, 213, 219);
         btnCancel.BackColor = Color.White;
-        btnCancel.ForeColor = Color.FromArgb(51, 65, 85);
-        btnCancel.Padding = new Padding(14, 6, 14, 6);
-        btnCancel.MinimumSize = new Size(0, 36);
+        btnCancel.ForeColor = Color.FromArgb(64, 64, 64);
+        btnCancel.Padding = new Padding(12, 5, 12, 5);
+        btnCancel.MinimumSize = new Size(0, 34);
         btnCancel.Cursor = Cursors.Hand;
 
         btnBrowse.FlatStyle = FlatStyle.Flat;
-        btnBrowse.FlatAppearance.BorderColor = Color.FromArgb(191, 219, 254);
+        btnBrowse.FlatAppearance.BorderColor = Color.FromArgb(209, 213, 219);
         btnBrowse.BackColor = Color.White;
-        btnBrowse.ForeColor = Color.FromArgb(15, 118, 110);
+        btnBrowse.ForeColor = Color.FromArgb(64, 64, 64);
         btnBrowse.Cursor = Cursors.Hand;
 
         foreach (var textBox in new[] { txtName, txtHost, txtDatabaseName, txtUsername, txtPassword, txtFilePath })

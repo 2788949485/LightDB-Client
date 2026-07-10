@@ -161,9 +161,9 @@ partial class MainForm
         mainLayout.ColumnCount = 1;
         mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         mainLayout.Dock = DockStyle.Fill;
-        mainLayout.Padding = new Padding(14, 12, 14, 14);
+        mainLayout.Padding = new Padding(18, 16, 18, 18);
         mainLayout.RowCount = 2;
-        mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 64F));
+        mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 72F));
         mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         mainLayout.Controls.Add(headerPanel, 0, 0);
         mainLayout.Controls.Add(splitContainer, 0, 1);
@@ -172,13 +172,13 @@ partial class MainForm
         //
         headerPanel.Controls.Add(headerLayout);
         headerPanel.Dock = DockStyle.Fill;
-        headerPanel.Margin = new Padding(0, 0, 0, 10);
-        headerPanel.Padding = new Padding(14, 8, 14, 8);
+        headerPanel.Margin = new Padding(0, 0, 0, 12);
+        headerPanel.Padding = new Padding(18, 8, 18, 8);
         //
         // headerLayout
         //
         headerLayout.ColumnCount = 2;
-        headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180F));
+        headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170F));
         headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         headerLayout.Dock = DockStyle.Fill;
         headerLayout.RowCount = 1;
@@ -194,8 +194,8 @@ partial class MainForm
         //
         // lblAppTitle
         //
-        lblAppTitle.AutoSize = true;
-        lblAppTitle.Location = new Point(0, 12);
+        lblAppTitle.Dock = DockStyle.Fill;
+        lblAppTitle.TextAlign = ContentAlignment.MiddleLeft;
         lblAppTitle.Text = "DB Lite Desktop";
         //
         // lblAppSubtitle
@@ -213,20 +213,20 @@ partial class MainForm
         //
         headerActionsLayout.ColumnCount = 9;
         headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 44F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 74F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 74F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 74F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 74F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 74F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 74F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 74F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 184F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
         headerActionsLayout.Dock = DockStyle.Right;
-        headerActionsLayout.Location = new Point(290, 0);
+        headerActionsLayout.Location = new Point(326, 0);
         headerActionsLayout.Margin = new Padding(0);
         headerActionsLayout.RowCount = 1;
-        headerActionsLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
-        headerActionsLayout.Size = new Size(752, 48);
+        headerActionsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        headerActionsLayout.Size = new Size(716, 48);
         headerActionsLayout.Controls.Add(lblConnection, 0, 0);
         headerActionsLayout.Controls.Add(cboConnections, 1, 0);
         headerActionsLayout.Controls.Add(btnNewConnection, 2, 0);
@@ -279,20 +279,17 @@ partial class MainForm
         splitContainer.Dock = DockStyle.Fill;
         splitContainer.FixedPanel = FixedPanel.Panel1;
         splitContainer.IsSplitterFixed = false;
-        splitContainer.Panel1MinSize = 220;
         splitContainer.Panel1.Controls.Add(navigationPanel);
         splitContainer.Panel1.Padding = new Padding(0, 0, 8, 0);
-        splitContainer.Panel2MinSize = 760;
         splitContainer.Panel2.Controls.Add(workspacePanel);
         splitContainer.Panel2.Padding = new Padding(8, 0, 0, 0);
-        splitContainer.SplitterDistance = 240;
         splitContainer.SplitterWidth = 8;
         //
         // navigationPanel
         //
         navigationPanel.Controls.Add(navigationLayout);
         navigationPanel.Dock = DockStyle.Fill;
-        navigationPanel.Padding = new Padding(14);
+        navigationPanel.Padding = new Padding(16);
         //
         // navigationLayout
         //
@@ -326,7 +323,7 @@ partial class MainForm
         //
         workspacePanel.Controls.Add(tabMain);
         workspacePanel.Dock = DockStyle.Fill;
-        workspacePanel.Padding = new Padding(14, 12, 14, 14);
+        workspacePanel.Padding = new Padding(18, 16, 18, 18);
         //
         // tabMain
         //
@@ -366,7 +363,7 @@ partial class MainForm
         previewLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         previewLayout.Dock = DockStyle.Fill;
         previewLayout.RowCount = 3;
-        previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 64F));
+        previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 68F));
         previewLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46F));
         previewLayout.Controls.Add(previewSearchPanel, 0, 0);
@@ -385,7 +382,7 @@ partial class MainForm
         previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
         previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 102F));
         previewSearchPanel.Dock = DockStyle.Fill;
-        previewSearchPanel.Padding = new Padding(10, 10, 10, 10);
+        previewSearchPanel.Padding = new Padding(14, 12, 14, 12);
         previewSearchPanel.RowCount = 1;
         previewSearchPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
         previewSearchPanel.Controls.Add(lblPreviewField, 0, 0);
@@ -442,7 +439,7 @@ partial class MainForm
         previewButtonPanel.Controls.Add(lblPreviewTip);
         previewButtonPanel.Dock = DockStyle.Fill;
         previewButtonPanel.FlowDirection = FlowDirection.LeftToRight;
-        previewButtonPanel.Padding = new Padding(8, 6, 8, 0);
+        previewButtonPanel.Padding = new Padding(12, 8, 12, 0);
         previewButtonPanel.WrapContents = false;
         //
         // preview footer controls
@@ -496,7 +493,7 @@ partial class MainForm
         sqlButtonPanel.Controls.Add(btnCopySql);
         sqlButtonPanel.Dock = DockStyle.Fill;
         sqlButtonPanel.FlowDirection = FlowDirection.LeftToRight;
-        sqlButtonPanel.Padding = new Padding(8, 6, 8, 0);
+        sqlButtonPanel.Padding = new Padding(12, 8, 12, 0);
         //
         // sql buttons
         //

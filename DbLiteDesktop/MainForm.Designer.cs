@@ -161,9 +161,9 @@ partial class MainForm
         mainLayout.ColumnCount = 1;
         mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         mainLayout.Dock = DockStyle.Fill;
-        mainLayout.Padding = new Padding(18, 16, 18, 18);
+        mainLayout.Padding = new Padding(20, 20, 20, 20);
         mainLayout.RowCount = 2;
-        mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 72F));
+        mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80F));
         mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         mainLayout.Controls.Add(headerPanel, 0, 0);
         mainLayout.Controls.Add(splitContainer, 0, 1);
@@ -172,8 +172,8 @@ partial class MainForm
         //
         headerPanel.Controls.Add(headerLayout);
         headerPanel.Dock = DockStyle.Fill;
-        headerPanel.Margin = new Padding(0, 0, 0, 12);
-        headerPanel.Padding = new Padding(18, 8, 18, 8);
+        headerPanel.Margin = new Padding(0, 0, 0, 16);
+        headerPanel.Padding = new Padding(20, 12, 20, 12);
         //
         // headerLayout
         //
@@ -212,21 +212,21 @@ partial class MainForm
         // headerActionsLayout
         //
         headerActionsLayout.ColumnCount = 9;
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 44F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 184F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
-        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 70F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 52F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 76F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 76F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 76F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 76F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 76F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 76F));
+        headerActionsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 76F));
         headerActionsLayout.Dock = DockStyle.Right;
         headerActionsLayout.Location = new Point(326, 0);
         headerActionsLayout.Margin = new Padding(0);
         headerActionsLayout.RowCount = 1;
         headerActionsLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        headerActionsLayout.Size = new Size(716, 48);
+        headerActionsLayout.Size = new Size(804, 48);
         headerActionsLayout.Controls.Add(lblConnection, 0, 0);
         headerActionsLayout.Controls.Add(cboConnections, 1, 0);
         headerActionsLayout.Controls.Add(btnNewConnection, 2, 0);
@@ -289,7 +289,7 @@ partial class MainForm
         //
         navigationPanel.Controls.Add(navigationLayout);
         navigationPanel.Dock = DockStyle.Fill;
-        navigationPanel.Padding = new Padding(16);
+        navigationPanel.Padding = new Padding(20);
         //
         // navigationLayout
         //
@@ -297,8 +297,8 @@ partial class MainForm
         navigationLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         navigationLayout.Dock = DockStyle.Fill;
         navigationLayout.RowCount = 3;
-        navigationLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28F));
-        navigationLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 26F));
+        navigationLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
+        navigationLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 24F));
         navigationLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         navigationLayout.Controls.Add(lblTablesTitle, 0, 0);
         navigationLayout.Controls.Add(lblTablesSubtitle, 0, 1);
@@ -323,7 +323,7 @@ partial class MainForm
         //
         workspacePanel.Controls.Add(tabMain);
         workspacePanel.Dock = DockStyle.Fill;
-        workspacePanel.Padding = new Padding(18, 16, 18, 18);
+        workspacePanel.Padding = new Padding(20, 20, 20, 20);
         //
         // tabMain
         //
@@ -373,18 +373,18 @@ partial class MainForm
         // previewSearchPanel
         //
         previewSearchPanel.ColumnCount = 8;
-        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 56F));
-        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 188F));
-        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 56F));
-        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 126F));
-        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 44F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 48F));
         previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
-        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 102F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 116F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 108F));
         previewSearchPanel.Dock = DockStyle.Fill;
-        previewSearchPanel.Padding = new Padding(14, 12, 14, 12);
+        previewSearchPanel.Padding = new Padding(16, 14, 16, 14);
         previewSearchPanel.RowCount = 1;
-        previewSearchPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
+        previewSearchPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 38F));
         previewSearchPanel.Controls.Add(lblPreviewField, 0, 0);
         previewSearchPanel.Controls.Add(cboPreviewField, 1, 0);
         previewSearchPanel.Controls.Add(lblPreviewMatch, 2, 0);
@@ -426,7 +426,7 @@ partial class MainForm
         //
         gridPreview.AllowUserToAddRows = false;
         gridPreview.AllowUserToDeleteRows = false;
-        gridPreview.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
+        gridPreview.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         gridPreview.Dock = DockStyle.Fill;
         gridPreview.ReadOnly = true;
         gridPreview.RowHeadersVisible = false;
@@ -511,7 +511,7 @@ partial class MainForm
         //
         gridResults.AllowUserToAddRows = false;
         gridResults.AllowUserToDeleteRows = false;
-        gridResults.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
+        gridResults.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         gridResults.Dock = DockStyle.Fill;
         gridResults.ReadOnly = true;
         gridResults.RowHeadersVisible = false;

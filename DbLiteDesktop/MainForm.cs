@@ -247,8 +247,18 @@ public partial class MainForm : Form
             var sql = BuildPreviewSql(provider);
             var result = provider.ExecuteQuery(_currentConfig, GetPassword(_currentConfig), sql, PreviewPageSize);
 
-            gridPreview.DataSource = null;
-            gridPreview.DataSource = result;
+            // 性能优化：暂停绘制以提高大数据量时的性能
+            gridPreview.SuspendLayout();
+            try
+            {
+                gridPreview.DataSource = null;
+                gridPreview.DataSource = result;
+            }
+            finally
+            {
+                gridPreview.ResumeLayout();
+            }
+            
             lblPreviewPage.Text = $"第 {_currentPreviewPage} 页";
             btnPrevPage.Enabled = _currentPreviewPage > 1;
             btnNextPage.Enabled = result.Rows.Count >= PreviewPageSize;
@@ -328,8 +338,18 @@ public partial class MainForm : Form
             var result = provider.ExecuteQuery(_currentConfig, GetPassword(_currentConfig), sql, 1000);
             var duration = (long)(DateTime.UtcNow - startedAt).TotalMilliseconds;
 
-            gridResults.DataSource = null;
-            gridResults.DataSource = result;
+            // 性能优化：暂停绘制以提高大数据量时的性能
+            gridResults.SuspendLayout();
+            try
+            {
+                gridResults.DataSource = null;
+                gridResults.DataSource = result;
+            }
+            finally
+            {
+                gridResults.ResumeLayout();
+            }
+            
             lblStatus.Text = $"查询成功，返回 {result.Rows.Count} 行，耗时 {duration} ms";
 
             _queryHistoryService.Add(new QueryHistoryItem
@@ -400,36 +420,41 @@ public partial class MainForm : Form
 
     private void ApplyTheme()
     {
-        var pageBackColor = Color.FromArgb(243, 244, 246);
+        var pageBackColor = Color.FromArgb(245, 247, 250);
         var cardBackColor = Color.White;
-        var chromeBackColor = Color.FromArgb(249, 250, 251);
-        var accentColor = Color.FromArgb(3, 105, 161);
-        var borderColor = Color.FromArgb(229, 231, 235);
-        var textColor = Color.FromArgb(23, 23, 23);
-        var subtleTextColor = Color.FromArgb(82, 82, 82);
+        var chromeBackColor = Color.FromArgb(251, 252, 253);
+        var accentColor = Color.FromArgb(59, 130, 246);
+        var accentHoverColor = Color.FromArgb(37, 99, 235);
+        var borderColor = Color.FromArgb(226, 232, 240);
+        var textColor = Color.FromArgb(15, 23, 42);
+        var subtleTextColor = Color.FromArgb(100, 116, 139);
 
         BackColor = pageBackColor;
-        Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+        Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
 
         txtPreviewKeyword.PlaceholderText = "输入值，或直接输入 字段名=数据";
         txtSql.PlaceholderText = "请输入只读 SQL，例如：SELECT * FROM your_table LIMIT 100";
 
-        lblAppTitle.Font = new Font("Microsoft YaHei UI", 13F, FontStyle.Bold, GraphicsUnit.Point);
-        lblAppTitle.ForeColor = textColor;
-        lblAppTitle.Text = "DB Lite Desktop";
+        lblAppTitle.Font = new Font("Segoe UI", 15F, FontStyle.Bold, GraphicsUnit.Point);
+        lblAppTitle.ForeColor = accentColor;
+        lblAppTitle.Text = "🗄️ DB Lite Desktop";
         lblAppTitle.AutoSize = false;
         lblAppTitle.Dock = DockStyle.Fill;
         lblAppTitle.TextAlign = ContentAlignment.MiddleLeft;
-        lblAppSubtitle.Font = new Font("Microsoft YaHei UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point);
+        lblAppSubtitle.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point);
         lblAppSubtitle.ForeColor = subtleTextColor;
-        lblAppSubtitle.Text = string.Empty;
-        lblAppSubtitle.Visible = false;
+        lblAppSubtitle.Text = "✨ 轻量级只读数据库客户端";
+        lblAppSubtitle.Visible = true;
+        lblAppSubtitle.AutoSize = true;
+        lblAppSubtitle.Location = new Point(0, 38);
+        lblAppSubtitle.Margin = new Padding(0);
 
-        lblTablesTitle.Font = new Font("Microsoft YaHei UI", 10F, FontStyle.Bold, GraphicsUnit.Point);
+        lblTablesTitle.Font = new Font("Segoe UI", 10F, FontStyle.Bold, GraphicsUnit.Point);
         lblTablesTitle.ForeColor = textColor;
-        lblTablesSubtitle.Font = new Font("Microsoft YaHei UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point);
+        lblTablesTitle.Text = "📊 数据表导航";
+        lblTablesSubtitle.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point);
         lblTablesSubtitle.ForeColor = subtleTextColor;
-        lblTablesSubtitle.Text = "连接成功后显示当前数据库中的表。";
+        lblTablesSubtitle.Text = "连接成功后显示当前数据库中的表";
 
         ApplyPanelChrome(headerPanel, cardBackColor, borderColor);
         ApplyPanelChrome(navigationPanel, cardBackColor, borderColor);
@@ -456,20 +481,51 @@ public partial class MainForm : Form
 
         treeTables.BackColor = chromeBackColor;
         treeTables.BorderStyle = BorderStyle.None;
-        treeTables.Font = new Font("Microsoft YaHei UI", 9.5F, FontStyle.Regular, GraphicsUnit.Point);
+        treeTables.Font = new Font("Segoe UI", 9.5F, FontStyle.Regular, GraphicsUnit.Point);
         treeTables.ForeColor = textColor;
         treeTables.FullRowSelect = true;
-        treeTables.HotTracking = false;
-        treeTables.Indent = 18;
-        treeTables.ItemHeight = 30;
+        treeTables.HotTracking = true;
+        treeTables.Indent = 20;
+        treeTables.ItemHeight = 32;
         treeTables.ShowLines = false;
-        treeTables.ShowPlusMinus = false;
+        treeTables.ShowPlusMinus = true;
         treeTables.ShowRootLines = false;
+        treeTables.HideSelection = false;
+        treeTables.DrawMode = TreeViewDrawMode.OwnerDrawText;
+        treeTables.DrawNode += (sender, e) => {
+            if (e.Node == null) return;
+            
+            var bounds = e.Bounds;
+            var isSelected = (e.State & TreeNodeStates.Selected) != 0;
+            var isHot = (e.State & TreeNodeStates.Hot) != 0;
+            
+            if (isSelected || isHot) {
+                using var brush = new SolidBrush(
+                    isSelected ? Color.FromArgb(219, 234, 254) : Color.FromArgb(241, 245, 249)
+                );
+                e.Graphics.FillRectangle(brush, new Rectangle(0, bounds.Top, treeTables.Width, bounds.Height));
+                
+                if (isSelected) {
+                    using var pen = new Pen(Color.FromArgb(59, 130, 246), 2);
+                    e.Graphics.DrawLine(pen, 0, bounds.Bottom - 1, treeTables.Width, bounds.Bottom - 1);
+                }
+            }
+            
+            TextRenderer.DrawText(
+                e.Graphics,
+                e.Node.Text,
+                new Font("Segoe UI", 9.5F, isSelected || isHot ? FontStyle.Bold : FontStyle.Regular, GraphicsUnit.Point),
+                new Rectangle(bounds.X + 4, bounds.Y, bounds.Width, bounds.Height),
+                isSelected ? Color.FromArgb(15, 23, 42) : Color.FromArgb(71, 85, 105),
+                TextFormatFlags.Left | TextFormatFlags.VerticalCenter
+            );
+        };
 
         tabMain.Appearance = TabAppearance.Normal;
         tabMain.DrawMode = TabDrawMode.OwnerDrawFixed;
-        tabMain.Padding = new Point(12, 8);
+        tabMain.Padding = new Point(16, 10);
         tabMain.SizeMode = TabSizeMode.Fixed;
+        tabMain.ItemSize = new Size(120, 36);
 
         StyleGrid(gridColumns);
         StyleGrid(gridResults);
@@ -486,13 +542,14 @@ public partial class MainForm : Form
 
         lblStatus.BackColor = chromeBackColor;
         lblStatus.ForeColor = subtleTextColor;
-        lblStatus.Font = new Font("Microsoft YaHei UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point);
-        lblStatus.Padding = new Padding(12, 0, 0, 0);
+        lblStatus.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point);
+        lblStatus.Padding = new Padding(16, 0, 0, 0);
+        lblStatus.BorderStyle = BorderStyle.None;
         lblPreviewPage.ForeColor = textColor;
-        lblPreviewPage.Font = new Font("Microsoft YaHei UI", 8.5F, FontStyle.Bold, GraphicsUnit.Point);
+        lblPreviewPage.Font = new Font("Segoe UI", 8.75F, FontStyle.Bold, GraphicsUnit.Point);
         lblPreviewTip.ForeColor = subtleTextColor;
-        lblPreviewTip.Font = new Font("Microsoft YaHei UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point);
-        lblPreviewTip.Text = "支持 字段名=数据";
+        lblPreviewTip.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point);
+        lblPreviewTip.Text = "💡 支持 字段名=数据 快捷搜索";
 
         previewSearchPanel.BackColor = chromeBackColor;
         previewSearchPanel.Margin = new Padding(0);
@@ -526,64 +583,117 @@ public partial class MainForm : Form
 
     private static void StyleGrid(DataGridView grid)
     {
+        // 性能优化：启用双缓冲
+        typeof(DataGridView).InvokeMember(
+            "DoubleBuffered",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.SetProperty,
+            null,
+            grid,
+            new object[] { true }
+        );
+
         grid.BackgroundColor = Color.White;
         grid.BorderStyle = BorderStyle.None;
         grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
         grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
         grid.EnableHeadersVisualStyles = false;
-        grid.GridColor = Color.FromArgb(229, 231, 235);
-        grid.ColumnHeadersDefaultCellStyle.BackColor = Color.White;
-        grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(23, 23, 23);
-        grid.ColumnHeadersDefaultCellStyle.Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        grid.ColumnHeadersHeight = 40;
+        
+        // 性能优化：减少不必要的重绘
+        grid.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing;
+        
+        grid.GridColor = Color.FromArgb(241, 245, 249);
+        grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(248, 250, 252);
+        grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(15, 23, 42);
+        grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+        grid.ColumnHeadersDefaultCellStyle.Padding = new Padding(8, 12, 8, 12);
+        grid.ColumnHeadersHeight = 44;
         grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-        grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(224, 242, 254);
-        grid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(23, 23, 23);
+        grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(219, 234, 254);
+        grid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(15, 23, 42);
         grid.DefaultCellStyle.BackColor = Color.White;
-        grid.DefaultCellStyle.ForeColor = Color.FromArgb(38, 38, 38);
-        grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(250, 250, 250);
-        grid.DefaultCellStyle.Padding = new Padding(6, 4, 6, 4);
-        grid.RowTemplate.Height = 34;
+        grid.DefaultCellStyle.ForeColor = Color.FromArgb(71, 85, 105);
+        grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 250, 252);
+        grid.DefaultCellStyle.Padding = new Padding(8, 8, 8, 8);
+        grid.RowTemplate.Height = 36;
         grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        
+        // 性能优化：设置列宽模式以提升滚动性能
+        if (grid.Name.Contains("Preview") || grid.Name.Contains("Results"))
+        {
+            // 对于数据量大的表格，使用填充模式而非自动调整
+            grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        }
+        else
+        {
+            grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        }
     }
 
     private static void StyleActionButton(Button button, Color? accentColor = null)
     {
         button.FlatStyle = FlatStyle.Flat;
         button.FlatAppearance.BorderSize = 0;
-        button.BackColor = accentColor ?? Color.FromArgb(3, 105, 161);
+        button.BackColor = accentColor ?? Color.FromArgb(59, 130, 246);
         button.ForeColor = Color.White;
-        button.Padding = new Padding(10, 4, 10, 4);
+        button.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+        button.Padding = new Padding(16, 8, 16, 8);
         button.Margin = new Padding(0, 0, 10, 0);
-        button.MinimumSize = new Size(0, 34);
+        button.MinimumSize = new Size(0, 36);
         button.Cursor = Cursors.Hand;
+        
+        button.MouseEnter += (_, _) => button.BackColor = accentColor ?? Color.FromArgb(37, 99, 235);
+        button.MouseLeave += (_, _) => button.BackColor = accentColor ?? Color.FromArgb(59, 130, 246);
     }
 
     private static void StyleGhostButton(Button button)
     {
         button.FlatStyle = FlatStyle.Flat;
-        button.FlatAppearance.BorderColor = Color.FromArgb(209, 213, 219);
+        button.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
         button.FlatAppearance.BorderSize = 1;
         button.BackColor = Color.White;
-        button.ForeColor = Color.FromArgb(64, 64, 64);
-        button.Padding = new Padding(10, 4, 10, 4);
+        button.ForeColor = Color.FromArgb(71, 85, 105);
+        button.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+        button.Padding = new Padding(14, 7, 14, 7);
         button.Margin = new Padding(0, 0, 10, 0);
-        button.MinimumSize = new Size(0, 34);
+        button.MinimumSize = new Size(0, 35);
         button.Cursor = Cursors.Hand;
+        
+        button.MouseEnter += (_, _) => {
+            button.BackColor = Color.FromArgb(248, 250, 252);
+            button.FlatAppearance.BorderColor = Color.FromArgb(148, 163, 184);
+        };
+        button.MouseLeave += (_, _) => {
+            button.BackColor = Color.White;
+            button.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+        };
     }
 
     private static void StyleHeaderButton(Button button, bool emphasize, Color? accentColor = null)
     {
         button.FlatStyle = FlatStyle.Flat;
         button.FlatAppearance.BorderSize = emphasize ? 0 : 1;
-        button.FlatAppearance.BorderColor = Color.FromArgb(229, 231, 235);
-        button.Margin = new Padding(3, 5, 3, 5);
-        button.Padding = new Padding(8, 3, 8, 3);
-        button.MinimumSize = new Size(0, 34);
-        button.Font = new Font("Microsoft YaHei UI", 8.5F, emphasize ? FontStyle.Bold : FontStyle.Regular, GraphicsUnit.Point);
-        button.ForeColor = emphasize ? Color.White : Color.FromArgb(38, 38, 38);
-        button.BackColor = emphasize ? accentColor ?? Color.FromArgb(3, 105, 161) : Color.FromArgb(248, 250, 252);
+        button.FlatAppearance.BorderColor = Color.FromArgb(226, 232, 240);
+        button.Margin = new Padding(3, 6, 3, 6);
+        button.Padding = new Padding(12, 6, 12, 6);
+        button.MinimumSize = new Size(0, 36);
+        button.Font = new Font("Segoe UI", 8.75F, emphasize ? FontStyle.Bold : FontStyle.Regular, GraphicsUnit.Point);
+        button.ForeColor = emphasize ? Color.White : Color.FromArgb(71, 85, 105);
+        button.BackColor = emphasize ? accentColor ?? Color.FromArgb(59, 130, 246) : Color.White;
         button.Cursor = Cursors.Hand;
+        
+        if (emphasize) {
+            button.MouseEnter += (_, _) => button.BackColor = accentColor ?? Color.FromArgb(37, 99, 235);
+            button.MouseLeave += (_, _) => button.BackColor = accentColor ?? Color.FromArgb(59, 130, 246);
+        } else {
+            button.MouseEnter += (_, _) => {
+                button.BackColor = Color.FromArgb(248, 250, 252);
+                button.ForeColor = Color.FromArgb(15, 23, 42);
+            };
+            button.MouseLeave += (_, _) => {
+                button.BackColor = Color.White;
+                button.ForeColor = Color.FromArgb(71, 85, 105);
+            };
+        }
     }
 
     private static void ApplyPanelChrome(Panel panel, Color backColor, Color borderColor)
@@ -606,7 +716,8 @@ public partial class MainForm : Form
     {
         comboBox.FlatStyle = FlatStyle.Flat;
         comboBox.BackColor = Color.White;
-        comboBox.ForeColor = Color.FromArgb(38, 38, 38);
+        comboBox.ForeColor = Color.FromArgb(71, 85, 105);
+        comboBox.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
         comboBox.IntegralHeight = false;
         comboBox.Margin = new Padding(0);
     }
@@ -615,7 +726,8 @@ public partial class MainForm : Form
     {
         textBox.BorderStyle = BorderStyle.FixedSingle;
         textBox.BackColor = Color.White;
-        textBox.ForeColor = Color.FromArgb(38, 38, 38);
+        textBox.ForeColor = Color.FromArgb(71, 85, 105);
+        textBox.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
     }
 
     private void AlignPreviewSearchControls()
@@ -662,25 +774,33 @@ public partial class MainForm : Form
         var bounds = e.Bounds;
         var selected = e.Index == tabMain.SelectedIndex;
         var backgroundColor = Color.White;
-        var textColor = selected ? Color.FromArgb(3, 105, 161) : Color.FromArgb(82, 82, 82);
+        var textColor = selected ? Color.FromArgb(59, 130, 246) : Color.FromArgb(100, 116, 139);
+        var hot = e.State == DrawItemState.HotLight;
 
         using var background = new SolidBrush(backgroundColor);
-        using var linePen = new Pen(Color.FromArgb(229, 231, 235), 1);
-        using var accentPen = new Pen(Color.FromArgb(3, 105, 161), 3);
+        using var linePen = new Pen(Color.FromArgb(226, 232, 240), 1);
+        using var accentPen = new Pen(Color.FromArgb(59, 130, 246), 2);
+        using var hotBrush = new SolidBrush(Color.FromArgb(248, 250, 252));
+        
         e.Graphics.FillRectangle(background, bounds);
-        e.Graphics.DrawLine(linePen, bounds.Left, bounds.Bottom - 1, bounds.Right, bounds.Bottom - 1);
-
-        if (selected)
-        {
-            e.Graphics.DrawLine(accentPen, bounds.Left + 10, bounds.Bottom - 2, bounds.Right - 10, bounds.Bottom - 2);
+        
+        if (hot && !selected) {
+            e.Graphics.FillRectangle(hotBrush, bounds);
         }
+        
+        if (selected) {
+            var accentBounds = new Rectangle(bounds.Left + 16, bounds.Bottom - 3, bounds.Width - 32, 2);
+            e.Graphics.FillRectangle(accentPen.Brush, accentBounds);
+        }
+
+        e.Graphics.DrawLine(linePen, bounds.Left, bounds.Bottom - 1, bounds.Right, bounds.Bottom - 1);
 
         TextRenderer.DrawText(
             e.Graphics,
             tabPage.Text,
-            new Font("Microsoft YaHei UI", 9F, selected ? FontStyle.Bold : FontStyle.Regular, GraphicsUnit.Point),
+            new Font("Segoe UI", 9.25F, selected ? FontStyle.Bold : FontStyle.Regular, GraphicsUnit.Point),
             bounds,
-            textColor,
+            hot && !selected ? Color.FromArgb(15, 23, 42) : textColor,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter
         );
     }

@@ -6,7 +6,7 @@ namespace DbLiteDesktop.Tests;
 public class MainFormLayoutTests
 {
     [Fact]
-    public void HeaderTitleFitsInsideItsPanel()
+    public void MainToolbarTextFitsInsideRows()
     {
         Exception? failure = null;
         var thread = new Thread(() =>
@@ -22,6 +22,23 @@ public class MainFormLayoutTests
 
                 Assert.True(title.Top >= 0);
                 Assert.True(title.Bottom <= panel.ClientSize.Height);
+
+                var tabMain = GetField<TabControl>(form, "tabMain");
+                tabMain.SelectedTab = GetField<TabPage>(form, "tabPreview");
+                form.PerformLayout();
+
+                foreach (var name in new[]
+                {
+                    "btnNewConnection", "btnEditConnection", "btnDeleteConnection",
+                    "btnTestConnection", "btnConnect", "btnRefresh", "btnDisconnect",
+                    "cboPreviewField", "cboPreviewMatch", "txtPreviewKeyword",
+                    "btnApplyPreviewFilter", "btnResetPreviewFilter"
+                })
+                {
+                    var control = GetField<Control>(form, name);
+                    Assert.True(control.Top >= 0, $"{name} 顶部超出容器");
+                    Assert.True(control.Bottom <= control.Parent!.ClientSize.Height, $"{name} 底部超出容器");
+                }
             }
             catch (Exception exception)
             {

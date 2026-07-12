@@ -253,6 +253,7 @@ public partial class MainForm : Form
             {
                 gridPreview.DataSource = null;
                 gridPreview.DataSource = result;
+                gridPreview.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
             }
             finally
             {
@@ -344,6 +345,7 @@ public partial class MainForm : Form
             {
                 gridResults.DataSource = null;
                 gridResults.DataSource = result;
+                gridResults.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
             }
             finally
             {
@@ -443,7 +445,7 @@ public partial class MainForm : Form
         lblAppTitle.TextAlign = ContentAlignment.MiddleLeft;
         lblAppSubtitle.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular, GraphicsUnit.Point);
         lblAppSubtitle.ForeColor = subtleTextColor;
-        lblAppSubtitle.Text = "✨ 轻量级只读数据库客户端";
+        // lblAppSubtitle.Text = "✨ 轻量级只读数据库客户端";
         lblAppSubtitle.Visible = true;
         lblAppSubtitle.AutoSize = true;
         lblAppSubtitle.Location = new Point(0, 38);
@@ -511,10 +513,14 @@ public partial class MainForm : Form
                 }
             }
             
+            using var boldFont = isSelected || isHot
+                ? new Font(treeTables.Font, FontStyle.Bold)
+                : null;
+
             TextRenderer.DrawText(
                 e.Graphics,
                 e.Node.Text,
-                new Font("Segoe UI", 9.5F, isSelected || isHot ? FontStyle.Bold : FontStyle.Regular, GraphicsUnit.Point),
+                boldFont ?? treeTables.Font,
                 new Rectangle(bounds.X + 4, bounds.Y, bounds.Width, bounds.Height),
                 isSelected ? Color.FromArgb(15, 23, 42) : Color.FromArgb(71, 85, 105),
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter
@@ -533,8 +539,8 @@ public partial class MainForm : Form
         StyleGrid(gridPreview);
 
         StyleActionButton(btnRunSql, accentColor);
-        StyleActionButton(btnPrevPage);
-        StyleActionButton(btnNextPage);
+        StyleGhostButton(btnPrevPage);
+        StyleGhostButton(btnNextPage);
         StyleActionButton(btnApplyPreviewFilter, accentColor);
         StyleGhostButton(btnClearSql);
         StyleGhostButton(btnCopySql);
@@ -565,6 +571,9 @@ public partial class MainForm : Form
         lblPreviewField.ForeColor = subtleTextColor;
         lblPreviewMatch.ForeColor = subtleTextColor;
         lblPreviewKeyword.ForeColor = subtleTextColor;
+        lblPreviewField.TextAlign = ContentAlignment.MiddleLeft;
+        lblPreviewMatch.TextAlign = ContentAlignment.MiddleLeft;
+        lblPreviewKeyword.TextAlign = ContentAlignment.MiddleLeft;
         lblPreviewField.Font = new Font("Microsoft YaHei UI", 8.5F, FontStyle.Bold, GraphicsUnit.Point);
         lblPreviewMatch.Font = new Font("Microsoft YaHei UI", 8.5F, FontStyle.Bold, GraphicsUnit.Point);
         lblPreviewKeyword.Font = new Font("Microsoft YaHei UI", 8.5F, FontStyle.Bold, GraphicsUnit.Point);
@@ -581,7 +590,7 @@ public partial class MainForm : Form
         AlignPreviewSearchControls();
     }
 
-    private static void StyleGrid(DataGridView grid)
+    private void StyleGrid(DataGridView grid)
     {
         // 性能优化：启用双缓冲
         typeof(DataGridView).InvokeMember(
@@ -615,13 +624,18 @@ public partial class MainForm : Form
         grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 250, 252);
         grid.DefaultCellStyle.Padding = new Padding(8, 8, 8, 8);
         grid.RowTemplate.Height = 36;
+        grid.RowTemplate.Resizable = DataGridViewTriState.False;
         grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
+        grid.ScrollBars = ScrollBars.Both;
+        grid.AllowUserToResizeRows = false;
+        grid.DefaultCellStyle.WrapMode = DataGridViewTriState.False;
         
         // 性能优化：设置列宽模式以提升滚动性能
-        if (grid.Name.Contains("Preview") || grid.Name.Contains("Results"))
+        if (ReferenceEquals(grid, gridPreview) || ReferenceEquals(grid, gridResults))
         {
-            // 对于数据量大的表格，使用填充模式而非自动调整
-            grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            // 加载时按内容计算一次列宽，滚动时保持固定。
+            grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
         }
         else
         {
@@ -719,7 +733,6 @@ public partial class MainForm : Form
         comboBox.ForeColor = Color.FromArgb(71, 85, 105);
         comboBox.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
         comboBox.IntegralHeight = false;
-        comboBox.Margin = new Padding(0);
     }
 
     private static void StyleTextInput(TextBox textBox)
@@ -732,19 +745,17 @@ public partial class MainForm : Form
 
     private void AlignPreviewSearchControls()
     {
-        previewSearchPanel.Height = 54;
+        cboConnections.Height = 36;
 
-        cboConnections.Height = 34;
-
-        cboPreviewField.Height = 34;
-        cboPreviewMatch.Height = 34;
-        txtPreviewKeyword.Height = 34;
+        cboPreviewField.Height = 36;
+        cboPreviewMatch.Height = 36;
+        txtPreviewKeyword.Height = 36;
 
         btnApplyPreviewFilter.AutoSize = false;
-        btnApplyPreviewFilter.Height = 34;
+        btnApplyPreviewFilter.Height = 36;
 
         btnResetPreviewFilter.AutoSize = false;
-        btnResetPreviewFilter.Height = 34;
+        btnResetPreviewFilter.Height = 36;
     }
 
     private void ApplyDefaultSplitterDistance()
@@ -795,10 +806,11 @@ public partial class MainForm : Form
 
         e.Graphics.DrawLine(linePen, bounds.Left, bounds.Bottom - 1, bounds.Right, bounds.Bottom - 1);
 
+        using var selectedFont = selected ? new Font(tabMain.Font, FontStyle.Bold) : null;
         TextRenderer.DrawText(
             e.Graphics,
             tabPage.Text,
-            new Font("Segoe UI", 9.25F, selected ? FontStyle.Bold : FontStyle.Regular, GraphicsUnit.Point),
+            selectedFont ?? tabMain.Font,
             bounds,
             hot && !selected ? Color.FromArgb(15, 23, 42) : textColor,
             TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter

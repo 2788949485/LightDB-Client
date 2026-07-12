@@ -161,7 +161,7 @@ partial class MainForm
         mainLayout.ColumnCount = 1;
         mainLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         mainLayout.Dock = DockStyle.Fill;
-        mainLayout.Padding = new Padding(20, 20, 20, 20);
+        mainLayout.Padding = new Padding(16);
         mainLayout.RowCount = 2;
         mainLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80F));
         mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
@@ -172,8 +172,8 @@ partial class MainForm
         //
         headerPanel.Controls.Add(headerLayout);
         headerPanel.Dock = DockStyle.Fill;
-        headerPanel.Margin = new Padding(0, 0, 0, 16);
-        headerPanel.Padding = new Padding(20, 12, 20, 12);
+        headerPanel.Margin = new Padding(0, 0, 0, 12);
+        headerPanel.Padding = new Padding(16, 10, 16, 10);
         //
         // headerLayout
         //
@@ -200,9 +200,9 @@ partial class MainForm
         //
         // lblAppSubtitle
         //
-        lblAppSubtitle.AutoSize = true;
-        lblAppSubtitle.Location = new Point(0, 30);
-        lblAppSubtitle.Text = "轻量只读数据库客户端";
+        // lblAppSubtitle.AutoSize = true;
+        // lblAppSubtitle.Location = new Point(0, 30);
+        // lblAppSubtitle.Text = "轻量只读数据库客户端";
         //
         // headerActionsPanel
         //
@@ -289,7 +289,7 @@ partial class MainForm
         //
         navigationPanel.Controls.Add(navigationLayout);
         navigationPanel.Dock = DockStyle.Fill;
-        navigationPanel.Padding = new Padding(20);
+        navigationPanel.Padding = new Padding(16);
         //
         // navigationLayout
         //
@@ -323,7 +323,7 @@ partial class MainForm
         //
         workspacePanel.Controls.Add(tabMain);
         workspacePanel.Dock = DockStyle.Fill;
-        workspacePanel.Padding = new Padding(20, 20, 20, 20);
+        workspacePanel.Padding = new Padding(16);
         //
         // tabMain
         //
@@ -339,7 +339,7 @@ partial class MainForm
         // tabColumns
         //
         tabColumns.Controls.Add(gridColumns);
-        tabColumns.Padding = new Padding(8);
+        tabColumns.Padding = new Padding(6);
         tabColumns.Text = "字段信息";
         //
         // gridColumns
@@ -354,7 +354,7 @@ partial class MainForm
         // tabPreview
         //
         tabPreview.Controls.Add(previewLayout);
-        tabPreview.Padding = new Padding(8);
+        tabPreview.Padding = new Padding(6);
         tabPreview.Text = "数据预览";
         //
         // previewLayout
@@ -363,9 +363,9 @@ partial class MainForm
         previewLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         previewLayout.Dock = DockStyle.Fill;
         previewLayout.RowCount = 3;
-        previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 68F));
+        previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 62F));
         previewLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46F));
+        previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
         previewLayout.Controls.Add(previewSearchPanel, 0, 0);
         previewLayout.Controls.Add(gridPreview, 0, 1);
         previewLayout.Controls.Add(previewButtonPanel, 0, 2);
@@ -373,18 +373,18 @@ partial class MainForm
         // previewSearchPanel
         //
         previewSearchPanel.ColumnCount = 8;
-        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60F));
-        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
-        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60F));
-        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130F));
-        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 48F));
-        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 116F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 108F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96F));
+        previewSearchPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 88F));
         previewSearchPanel.Dock = DockStyle.Fill;
-        previewSearchPanel.Padding = new Padding(16, 14, 16, 14);
+        previewSearchPanel.Padding = new Padding(14, 10, 14, 10);
         previewSearchPanel.RowCount = 1;
-        previewSearchPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 38F));
+        previewSearchPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));
         previewSearchPanel.Controls.Add(lblPreviewField, 0, 0);
         previewSearchPanel.Controls.Add(cboPreviewField, 1, 0);
         previewSearchPanel.Controls.Add(lblPreviewMatch, 2, 0);
@@ -401,20 +401,20 @@ partial class MainForm
         lblPreviewField.Text = "字段";
         cboPreviewField.Anchor = AnchorStyles.Left | AnchorStyles.Right;
         cboPreviewField.DropDownStyle = ComboBoxStyle.DropDownList;
-        cboPreviewField.Margin = new Padding(0, 0, 14, 0);
+        cboPreviewField.Margin = new Padding(0, 0, 12, 0);
         lblPreviewMatch.Anchor = AnchorStyles.Left;
         lblPreviewMatch.AutoSize = true;
         lblPreviewMatch.Text = "方式";
         cboPreviewMatch.Anchor = AnchorStyles.Left | AnchorStyles.Right;
         cboPreviewMatch.DropDownStyle = ComboBoxStyle.DropDownList;
-        cboPreviewMatch.Margin = new Padding(0, 0, 14, 0);
+        cboPreviewMatch.Margin = new Padding(0, 0, 12, 0);
         lblPreviewKeyword.Anchor = AnchorStyles.Left;
         lblPreviewKeyword.AutoSize = true;
         lblPreviewKeyword.Text = "值";
         txtPreviewKeyword.Anchor = AnchorStyles.Left | AnchorStyles.Right;
-        txtPreviewKeyword.Margin = new Padding(0, 0, 14, 0);
+        txtPreviewKeyword.Margin = new Padding(0, 0, 12, 0);
         btnApplyPreviewFilter.Anchor = AnchorStyles.Left | AnchorStyles.Right;
-        btnApplyPreviewFilter.Margin = new Padding(0, 0, 12, 0);
+        btnApplyPreviewFilter.Margin = new Padding(0, 0, 8, 0);
         btnApplyPreviewFilter.Text = "查询";
         btnApplyPreviewFilter.Click += btnApplyPreviewFilter_Click;
         btnResetPreviewFilter.Anchor = AnchorStyles.Left | AnchorStyles.Right;
@@ -439,7 +439,7 @@ partial class MainForm
         previewButtonPanel.Controls.Add(lblPreviewTip);
         previewButtonPanel.Dock = DockStyle.Fill;
         previewButtonPanel.FlowDirection = FlowDirection.LeftToRight;
-        previewButtonPanel.Padding = new Padding(12, 8, 12, 0);
+        previewButtonPanel.Padding = new Padding(12, 6, 12, 0);
         previewButtonPanel.WrapContents = false;
         //
         // preview footer controls
@@ -451,16 +451,16 @@ partial class MainForm
         btnNextPage.Text = "下一页";
         btnNextPage.Click += btnNextPage_Click;
         lblPreviewPage.AutoSize = true;
-        lblPreviewPage.Margin = new Padding(16, 10, 16, 0);
+        lblPreviewPage.Margin = new Padding(12, 9, 12, 0);
         lblPreviewPage.Text = "第 1 页";
         lblPreviewTip.AutoSize = true;
-        lblPreviewTip.Margin = new Padding(0, 10, 0, 0);
+        lblPreviewTip.Margin = new Padding(0, 9, 0, 0);
         lblPreviewTip.Text = "支持 字段名=数据";
         //
         // tabSql
         //
         tabSql.Controls.Add(sqlLayout);
-        tabSql.Padding = new Padding(8);
+        tabSql.Padding = new Padding(6);
         tabSql.Text = "SQL 查询";
         //
         // sqlLayout
@@ -469,10 +469,10 @@ partial class MainForm
         sqlLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
         sqlLayout.Dock = DockStyle.Fill;
         sqlLayout.RowCount = 4;
-        sqlLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 146F));
-        sqlLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46F));
+        sqlLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 132F));
+        sqlLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
         sqlLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        sqlLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
+        sqlLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 32F));
         sqlLayout.Controls.Add(txtSql, 0, 0);
         sqlLayout.Controls.Add(sqlButtonPanel, 0, 1);
         sqlLayout.Controls.Add(gridResults, 0, 2);
@@ -525,7 +525,7 @@ partial class MainForm
         // tabHistory
         //
         tabHistory.Controls.Add(gridHistory);
-        tabHistory.Padding = new Padding(8);
+        tabHistory.Padding = new Padding(6);
         tabHistory.Text = "查询历史";
         //
         // gridHistory

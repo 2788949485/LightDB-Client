@@ -29,3 +29,6 @@ NuGet.Config
 
 # Claude Code 本地个人设置(权限/偏好,不随源码分发)
 .claude/settings.local.json
+
+# 本地开发文档(不随源码分发)
+轻量级多数据库桌面查询工具开发文档.md

@@ -16,7 +16,7 @@ WizardStyle=modern
 Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 
 [Files]
-Source: "D:\zhuomian\LightDB-Client\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "D:\zhuomian\LightDB-Client\publish\DbLiteDesktop-win-x64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\DB Lite Desktop"; Filename: "{app}\DbLiteDesktop.exe"

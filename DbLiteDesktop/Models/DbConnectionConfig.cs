@@ -11,6 +11,8 @@ public class DbConnectionConfig
     public string? Username { get; set; }
     public string? PasswordEncrypted { get; set; }
     public string? FilePath { get; set; }
+    public int? ConnectionTimeoutSec { get; set; }
+    public int? CommandTimeoutSec { get; set; }
     public string CreatedAt { get; set; } = string.Empty;
     public string UpdatedAt { get; set; } = string.Empty;
 

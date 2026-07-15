@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace DbLiteDesktop.Services;
 
-public class SqlGuardService
+public static class SqlGuardService
 {
     private static readonly string[] AllowedPrefixes =
     [
@@ -15,32 +15,23 @@ public class SqlGuardService
         "with"
     ];
 
-    private static readonly string[] BlockedKeywords =
-    [
-        "insert",
-        "update",
-        "delete",
-        "drop",
-        "alter",
-        "truncate",
-        "create",
-        "replace",
-        "grant",
-        "revoke",
-        "merge",
-        "exec",
-        "execute",
-        "call"
-    ];
+    private static readonly Regex[] BlockedKeywordRegexes = new[]
+    {
+        "insert", "update", "delete", "drop", "alter", "truncate",
+        "create", "replace", "grant", "revoke", "merge", "exec",
+        "execute", "call"
+    }
+    .Select(keyword => new Regex($@"\b{keyword}\b", RegexOptions.Compiled | RegexOptions.IgnoreCase))
+    .ToArray();
 
-    public bool IsReadonlySql(string sql)
+    public static bool IsReadonlySql(string sql)
     {
         if (string.IsNullOrWhiteSpace(sql))
         {
             return false;
         }
 
-        var cleanSql = sql.Trim().ToLowerInvariant();
+        var cleanSql = sql.Trim();
         var statements = cleanSql.Split(
             ';',
             StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries
@@ -54,14 +45,14 @@ public class SqlGuardService
         var firstWord = cleanSql
             .Split([' ', '\r', '\n', '\t'], StringSplitOptions.RemoveEmptyEntries)[0];
 
-        if (!AllowedPrefixes.Contains(firstWord))
+        if (!AllowedPrefixes.Contains(firstWord, StringComparer.OrdinalIgnoreCase))
         {
             return false;
         }
 
-        foreach (var keyword in BlockedKeywords)
+        foreach (var regex in BlockedKeywordRegexes)
         {
-            if (Regex.IsMatch(cleanSql, $@"\b{keyword}\b"))
+            if (regex.IsMatch(cleanSql))
             {
                 return false;
             }

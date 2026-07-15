@@ -32,11 +32,40 @@ public class ConfigService
                 username TEXT,
                 password_encrypted TEXT,
                 file_path TEXT,
+                connection_timeout_sec INTEGER,
+                command_timeout_sec INTEGER,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             );
             """;
         command.ExecuteNonQuery();
+
+        MigrateAddColumnIfMissing(connection, "db_connections", "connection_timeout_sec", "INTEGER");
+        MigrateAddColumnIfMissing(connection, "db_connections", "command_timeout_sec", "INTEGER");
+    }
+
+    private static void MigrateAddColumnIfMissing(SqliteConnection connection, string tableName, string columnName, string columnType)
+    {
+        using var checkCmd = connection.CreateCommand();
+        checkCmd.CommandText = $"PRAGMA table_info({tableName});";
+        using var reader = checkCmd.ExecuteReader();
+        var exists = false;
+        while (reader.Read())
+        {
+            if (string.Equals(reader.GetString(1), columnName, StringComparison.OrdinalIgnoreCase))
+            {
+                exists = true;
+                break;
+            }
+        }
+        reader.Close();
+
+        if (!exists)
+        {
+            using var alterCmd = connection.CreateCommand();
+            alterCmd.CommandText = $"ALTER TABLE {tableName} ADD COLUMN {columnName} {columnType};";
+            alterCmd.ExecuteNonQuery();
+        }
     }
 
     public List<DbConnectionConfig> GetConnections()
@@ -47,7 +76,8 @@ public class ConfigService
         using var command = connection.CreateCommand();
         command.CommandText =
             """
-            SELECT id, name, db_type, host, port, database_name, username, password_encrypted, file_path, created_at, updated_at
+            SELECT id, name, db_type, host, port, database_name, username, password_encrypted, file_path,
+                   connection_timeout_sec, command_timeout_sec, created_at, updated_at
             FROM db_connections
             ORDER BY name;
             """;
@@ -71,7 +101,8 @@ public class ConfigService
         using var command = connection.CreateCommand();
         command.CommandText =
             """
-            SELECT id, name, db_type, host, port, database_name, username, password_encrypted, file_path, created_at, updated_at
+            SELECT id, name, db_type, host, port, database_name, username, password_encrypted, file_path,
+                   connection_timeout_sec, command_timeout_sec, created_at, updated_at
             FROM db_connections
             WHERE id = $id;
             """;
@@ -95,10 +126,12 @@ public class ConfigService
             command.CommandText =
                 """
                 INSERT INTO db_connections (
-                    name, db_type, host, port, database_name, username, password_encrypted, file_path, created_at, updated_at
+                    name, db_type, host, port, database_name, username, password_encrypted, file_path,
+                    connection_timeout_sec, command_timeout_sec, created_at, updated_at
                 )
                 VALUES (
-                    $name, $dbType, $host, $port, $databaseName, $username, $passwordEncrypted, $filePath, $createdAt, $updatedAt
+                    $name, $dbType, $host, $port, $databaseName, $username, $passwordEncrypted, $filePath,
+                    $connectionTimeoutSec, $commandTimeoutSec, $createdAt, $updatedAt
                 );
                 SELECT last_insert_rowid();
                 """;
@@ -116,6 +149,8 @@ public class ConfigService
                     username = $username,
                     password_encrypted = $passwordEncrypted,
                     file_path = $filePath,
+                    connection_timeout_sec = $connectionTimeoutSec,
+                    command_timeout_sec = $commandTimeoutSec,
                     updated_at = $updatedAt
                 WHERE id = $id;
                 """;
@@ -131,6 +166,8 @@ public class ConfigService
         command.Parameters.AddWithValue("$username", (object?)config.Username ?? DBNull.Value);
         command.Parameters.AddWithValue("$passwordEncrypted", (object?)config.PasswordEncrypted ?? DBNull.Value);
         command.Parameters.AddWithValue("$filePath", (object?)config.FilePath ?? DBNull.Value);
+        command.Parameters.AddWithValue("$connectionTimeoutSec", (object?)config.ConnectionTimeoutSec ?? DBNull.Value);
+        command.Parameters.AddWithValue("$commandTimeoutSec", (object?)config.CommandTimeoutSec ?? DBNull.Value);
         command.Parameters.AddWithValue("$createdAt", config.CreatedAt);
         command.Parameters.AddWithValue("$updatedAt", config.UpdatedAt);
 
@@ -173,8 +210,10 @@ public class ConfigService
             Username = reader.IsDBNull(6) ? null : reader.GetString(6),
             PasswordEncrypted = reader.IsDBNull(7) ? null : reader.GetString(7),
             FilePath = reader.IsDBNull(8) ? null : reader.GetString(8),
-            CreatedAt = reader.GetString(9),
-            UpdatedAt = reader.GetString(10)
+            ConnectionTimeoutSec = reader.IsDBNull(9) ? null : reader.GetInt32(9),
+            CommandTimeoutSec = reader.IsDBNull(10) ? null : reader.GetInt32(10),
+            CreatedAt = reader.GetString(11),
+            UpdatedAt = reader.GetString(12)
         };
     }
 }

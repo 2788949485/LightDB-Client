@@ -34,6 +34,8 @@ public partial class ConnectionForm : Form
             Username = config.Username,
             PasswordEncrypted = config.PasswordEncrypted,
             FilePath = config.FilePath,
+            ConnectionTimeoutSec = config.ConnectionTimeoutSec,
+            CommandTimeoutSec = config.CommandTimeoutSec,
             CreatedAt = config.CreatedAt,
             UpdatedAt = config.UpdatedAt
         };
@@ -42,7 +44,7 @@ public partial class ConnectionForm : Form
     private void LoadFromModel()
     {
         cboDbType.Items.Clear();
-        cboDbType.Items.AddRange(["sqlite", "mysql"]);
+        cboDbType.Items.AddRange(["sqlite", "mysql", "postgresql"]);
         cboDbType.SelectedItem = string.IsNullOrWhiteSpace(ConnectionConfig.DbType)
             ? "sqlite"
             : ConnectionConfig.DbType.ToLowerInvariant();
@@ -53,6 +55,8 @@ public partial class ConnectionForm : Form
         txtDatabaseName.Text = ConnectionConfig.DatabaseName ?? string.Empty;
         txtUsername.Text = ConnectionConfig.Username ?? string.Empty;
         txtFilePath.Text = ConnectionConfig.FilePath ?? string.Empty;
+        numConnectionTimeout.Value = ConnectionConfig.ConnectionTimeoutSec is > 0 ? ConnectionConfig.ConnectionTimeoutSec.Value : 10;
+        numCommandTimeout.Value = ConnectionConfig.CommandTimeoutSec is > 0 ? ConnectionConfig.CommandTimeoutSec.Value : 30;
 
         if (!string.IsNullOrWhiteSpace(ConnectionConfig.PasswordEncrypted) &&
             !string.Equals(ConnectionConfig.DbType, "sqlite", StringComparison.OrdinalIgnoreCase))
@@ -74,6 +78,20 @@ public partial class ConnectionForm : Form
         lblPassword.Visible = txtPassword.Visible = !isSqlite;
 
         lblFilePath.Visible = txtFilePath.Visible = btnBrowse.Visible = isSqlite;
+
+        // 超时设置对 MySQL/PostgreSQL 可见
+        lblConnectionTimeout.Visible = numConnectionTimeout.Visible = !isSqlite;
+        lblCommandTimeout.Visible = numCommandTimeout.Visible = !isSqlite;
+
+        // 根据数据库类型切换默认端口
+        if (!isSqlite && numPort.Value == 3306 && SelectedDbType == "postgresql")
+        {
+            numPort.Value = 5432;
+        }
+        else if (!isSqlite && numPort.Value == 5432 && SelectedDbType == "mysql")
+        {
+            numPort.Value = 3306;
+        }
     }
 
     private string SelectedDbType =>
@@ -88,14 +106,16 @@ public partial class ConnectionForm : Form
             Id = ConnectionConfig.Id,
             Name = txtName.Text.Trim(),
             DbType = dbType,
-            Host = dbType == "mysql" ? txtHost.Text.Trim() : null,
-            Port = dbType == "mysql" ? (int)numPort.Value : null,
-            DatabaseName = dbType == "mysql" ? txtDatabaseName.Text.Trim() : null,
-            Username = dbType == "mysql" ? txtUsername.Text.Trim() : null,
-            PasswordEncrypted = dbType == "mysql"
+            Host = dbType != "sqlite" ? txtHost.Text.Trim() : null,
+            Port = dbType != "sqlite" ? (int)numPort.Value : null,
+            DatabaseName = dbType != "sqlite" ? txtDatabaseName.Text.Trim() : null,
+            Username = dbType != "sqlite" ? txtUsername.Text.Trim() : null,
+            PasswordEncrypted = dbType != "sqlite"
                 ? _passwordEncryptService.Encrypt(txtPassword.Text)
                 : null,
             FilePath = dbType == "sqlite" ? txtFilePath.Text.Trim() : null,
+            ConnectionTimeoutSec = dbType != "sqlite" ? (int)numConnectionTimeout.Value : null,
+            CommandTimeoutSec = dbType != "sqlite" ? (int)numCommandTimeout.Value : null,
             CreatedAt = ConnectionConfig.CreatedAt,
             UpdatedAt = ConnectionConfig.UpdatedAt
         };
@@ -123,7 +143,7 @@ public partial class ConnectionForm : Form
                 string.IsNullOrWhiteSpace(txtDatabaseName.Text) ||
                 string.IsNullOrWhiteSpace(txtUsername.Text))
             {
-                message = "请填写 MySQL 的主机、数据库名称和用户名。";
+                message = "请填写主机地址、数据库名称和用户名。";
                 return false;
             }
         }
@@ -164,46 +184,60 @@ public partial class ConnectionForm : Form
 
     private void ApplyTheme()
     {
-        BackColor = Color.FromArgb(243, 244, 246);
-        Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+        var accentColor = Color.FromArgb(59, 130, 246);
+        var accentHoverColor = Color.FromArgb(37, 99, 235);
+        var borderColor = Color.FromArgb(226, 232, 240);
+        var textColor = Color.FromArgb(15, 23, 42);
+        var subtleTextColor = Color.FromArgb(71, 85, 105);
+
+        BackColor = Color.FromArgb(245, 247, 250);
+        Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
 
         foreach (var button in new[] { btnTest, btnSave, btnConnect })
         {
             button.FlatStyle = FlatStyle.Flat;
             button.FlatAppearance.BorderSize = 0;
-            button.BackColor = Color.FromArgb(3, 105, 161);
+            button.BackColor = accentColor;
             button.ForeColor = Color.White;
-            button.Padding = new Padding(12, 5, 12, 5);
-            button.MinimumSize = new Size(0, 34);
+            button.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point);
+            button.Padding = new Padding(14, 7, 14, 7);
+            button.MinimumSize = new Size(0, 36);
             button.Cursor = Cursors.Hand;
+            button.MouseEnter += (_, _) => button.BackColor = accentHoverColor;
+            button.MouseLeave += (_, _) => button.BackColor = accentColor;
         }
 
-        btnCancel.FlatStyle = FlatStyle.Flat;
-        btnCancel.FlatAppearance.BorderColor = Color.FromArgb(209, 213, 219);
-        btnCancel.BackColor = Color.White;
-        btnCancel.ForeColor = Color.FromArgb(64, 64, 64);
-        btnCancel.Padding = new Padding(12, 5, 12, 5);
-        btnCancel.MinimumSize = new Size(0, 34);
-        btnCancel.Cursor = Cursors.Hand;
-
-        btnBrowse.FlatStyle = FlatStyle.Flat;
-        btnBrowse.FlatAppearance.BorderColor = Color.FromArgb(209, 213, 219);
-        btnBrowse.BackColor = Color.White;
-        btnBrowse.ForeColor = Color.FromArgb(64, 64, 64);
-        btnBrowse.Cursor = Cursors.Hand;
+        foreach (var button in new[] { btnCancel, btnBrowse })
+        {
+            button.FlatStyle = FlatStyle.Flat;
+            button.FlatAppearance.BorderColor = borderColor;
+            button.FlatAppearance.BorderSize = 1;
+            button.BackColor = Color.White;
+            button.ForeColor = subtleTextColor;
+            button.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+            button.Padding = new Padding(14, 7, 14, 7);
+            button.MinimumSize = new Size(0, 35);
+            button.Cursor = Cursors.Hand;
+        }
 
         foreach (var textBox in new[] { txtName, txtHost, txtDatabaseName, txtUsername, txtPassword, txtFilePath })
         {
             textBox.BorderStyle = BorderStyle.FixedSingle;
             textBox.BackColor = Color.White;
-            textBox.ForeColor = Color.FromArgb(15, 23, 42);
+            textBox.ForeColor = textColor;
+            textBox.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
         }
 
-        cboDbType.FlatStyle = FlatStyle.Flat;
-        cboDbType.BackColor = Color.White;
-        cboDbType.ForeColor = Color.FromArgb(15, 23, 42);
+        foreach (var comboBox in new[] { cboDbType })
+        {
+            comboBox.FlatStyle = FlatStyle.Flat;
+            comboBox.BackColor = Color.White;
+            comboBox.ForeColor = textColor;
+            comboBox.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
+        }
+
         numPort.BackColor = Color.White;
-        numPort.ForeColor = Color.FromArgb(15, 23, 42);
+        numPort.ForeColor = subtleTextColor;
     }
 
     private void cboDbType_SelectedIndexChanged(object? sender, EventArgs e)

@@ -8,6 +8,7 @@ public static class DatabaseProviderFactory
         {
             "mysql" => new MySqlProvider(),
             "sqlite" => new SQLiteProvider(),
+            "postgresql" or "postgres" or "pgsql" => new PostgresProvider(),
             _ => throw new InvalidOperationException("暂不支持该数据库类型")
         };
     }

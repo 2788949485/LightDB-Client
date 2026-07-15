@@ -21,6 +21,10 @@ partial class ConnectionForm
     private Label lblFilePath = null!;
     private TextBox txtFilePath = null!;
     private Button btnBrowse = null!;
+    private Label lblConnectionTimeout = null!;
+    private NumericUpDown numConnectionTimeout = null!;
+    private Label lblCommandTimeout = null!;
+    private NumericUpDown numCommandTimeout = null!;
     private FlowLayoutPanel buttonPanel = null!;
     private Button btnTest = null!;
     private Button btnSave = null!;
@@ -58,12 +62,18 @@ partial class ConnectionForm
         lblFilePath = new Label();
         txtFilePath = new TextBox();
         btnBrowse = new Button();
+        lblConnectionTimeout = new Label();
+        numConnectionTimeout = new NumericUpDown();
+        lblCommandTimeout = new Label();
+        numCommandTimeout = new NumericUpDown();
         buttonPanel = new FlowLayoutPanel();
         btnTest = new Button();
         btnSave = new Button();
         btnConnect = new Button();
         btnCancel = new Button();
         ((System.ComponentModel.ISupportInitialize)numPort).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)numConnectionTimeout).BeginInit();
+        ((System.ComponentModel.ISupportInitialize)numCommandTimeout).BeginInit();
         SuspendLayout();
         //
         // layout
@@ -74,8 +84,8 @@ partial class ConnectionForm
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90F));
         layout.Dock = DockStyle.Fill;
         layout.Padding = new Padding(18, 18, 18, 12);
-        layout.RowCount = 8;
-        for (var i = 0; i < 7; i++)
+        layout.RowCount = 10;
+        for (var i = 0; i < 9; i++)
         {
             layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 46F));
         }
@@ -146,6 +156,28 @@ partial class ConnectionForm
         layout.Controls.Add(txtPassword, 1, 6);
         layout.SetColumnSpan(txtPassword, 2);
 
+        lblConnectionTimeout.Text = "连接超时(秒)";
+        lblConnectionTimeout.TextAlign = ContentAlignment.MiddleLeft;
+        lblConnectionTimeout.Dock = DockStyle.Fill;
+        numConnectionTimeout.Dock = DockStyle.Left;
+        numConnectionTimeout.Maximum = 300;
+        numConnectionTimeout.Minimum = 1;
+        numConnectionTimeout.Value = 10;
+        numConnectionTimeout.Width = 120;
+        layout.Controls.Add(lblConnectionTimeout, 0, 7);
+        layout.Controls.Add(numConnectionTimeout, 1, 7);
+
+        lblCommandTimeout.Text = "命令超时(秒)";
+        lblCommandTimeout.TextAlign = ContentAlignment.MiddleLeft;
+        lblCommandTimeout.Dock = DockStyle.Fill;
+        numCommandTimeout.Dock = DockStyle.Left;
+        numCommandTimeout.Maximum = 600;
+        numCommandTimeout.Minimum = 1;
+        numCommandTimeout.Value = 30;
+        numCommandTimeout.Width = 120;
+        layout.Controls.Add(lblCommandTimeout, 0, 8);
+        layout.Controls.Add(numCommandTimeout, 1, 8);
+
         lblFilePath.Text = "SQLite 文件";
         lblFilePath.TextAlign = ContentAlignment.MiddleLeft;
         lblFilePath.Dock = DockStyle.Fill;
@@ -153,9 +185,9 @@ partial class ConnectionForm
         btnBrowse.Text = "选择文件";
         btnBrowse.Width = 80;
         btnBrowse.Click += btnBrowse_Click;
-        layout.Controls.Add(lblFilePath, 0, 7);
-        layout.Controls.Add(txtFilePath, 1, 7);
-        layout.Controls.Add(btnBrowse, 2, 7);
+        layout.Controls.Add(lblFilePath, 0, 9);
+        layout.Controls.Add(txtFilePath, 1, 9);
+        layout.Controls.Add(btnBrowse, 2, 9);
 
         //
         // button panel
@@ -193,7 +225,7 @@ partial class ConnectionForm
         AutoScaleDimensions = new SizeF(7F, 17F);
         AutoScaleMode = AutoScaleMode.Font;
         CancelButton = btnCancel;
-        ClientSize = new Size(580, 412);
+        ClientSize = new Size(580, 504);
         Controls.Add(layout);
         Controls.Add(buttonPanel);
         FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -203,6 +235,8 @@ partial class ConnectionForm
         StartPosition = FormStartPosition.CenterParent;
         Text = "数据库连接";
         ((System.ComponentModel.ISupportInitialize)numPort).EndInit();
+        ((System.ComponentModel.ISupportInitialize)numConnectionTimeout).EndInit();
+        ((System.ComponentModel.ISupportInitialize)numCommandTimeout).EndInit();
         ResumeLayout(false);
         PerformLayout();
     }

@@ -52,11 +52,14 @@ partial class MainForm
     private Label lblPreviewPage = null!;
     private Label lblPreviewTip = null!;
     private TableLayoutPanel sqlLayout = null!;
-    private TextBox txtSql = null!;
+    private DbLiteDesktop.Controls.SqlEditorTextBox txtSql = null!;
     private FlowLayoutPanel sqlButtonPanel = null!;
     private Button btnRunSql = null!;
     private Button btnClearSql = null!;
     private Button btnCopySql = null!;
+    private Button btnExportResults = null!;
+    private Button btnExportPreview = null!;
+    private Button btnRowCount = null!;
     private Label lblStatus = null!;
 
     protected override void Dispose(bool disposing)
@@ -118,11 +121,14 @@ partial class MainForm
         lblPreviewTip = new Label();
         tabSql = new TabPage();
         sqlLayout = new TableLayoutPanel();
-        txtSql = new TextBox();
+        txtSql = new DbLiteDesktop.Controls.SqlEditorTextBox();
         sqlButtonPanel = new FlowLayoutPanel();
         btnRunSql = new Button();
         btnClearSql = new Button();
         btnCopySql = new Button();
+        btnExportResults = new Button();
+        btnRowCount = new Button();
+        btnExportPreview = new Button();
         gridResults = new DataGridView();
         lblStatus = new Label();
         tabHistory = new TabPage();
@@ -365,7 +371,7 @@ partial class MainForm
         previewLayout.RowCount = 3;
         previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 62F));
         previewLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 44F));
+        previewLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 52F));
         previewLayout.Controls.Add(previewSearchPanel, 0, 0);
         previewLayout.Controls.Add(gridPreview, 0, 1);
         previewLayout.Controls.Add(previewButtonPanel, 0, 2);
@@ -430,12 +436,15 @@ partial class MainForm
         gridPreview.Dock = DockStyle.Fill;
         gridPreview.ReadOnly = true;
         gridPreview.RowHeadersVisible = false;
+        gridPreview.AllowUserToOrderColumns = true;
         //
         // previewButtonPanel
         //
         previewButtonPanel.Controls.Add(btnPrevPage);
         previewButtonPanel.Controls.Add(btnNextPage);
         previewButtonPanel.Controls.Add(lblPreviewPage);
+        previewButtonPanel.Controls.Add(btnRowCount);
+        previewButtonPanel.Controls.Add(btnExportPreview);
         previewButtonPanel.Controls.Add(lblPreviewTip);
         previewButtonPanel.Dock = DockStyle.Fill;
         previewButtonPanel.FlowDirection = FlowDirection.LeftToRight;
@@ -456,6 +465,14 @@ partial class MainForm
         lblPreviewTip.AutoSize = true;
         lblPreviewTip.Margin = new Padding(0, 9, 0, 0);
         lblPreviewTip.Text = "支持 字段名=数据";
+        btnRowCount.AutoSize = true;
+        btnRowCount.Text = "行数统计";
+        btnRowCount.Margin = new Padding(12, 2, 0, 0);
+        btnRowCount.Click += btnRowCount_Click;
+        btnExportPreview.AutoSize = true;
+        btnExportPreview.Text = "导出预览";
+        btnExportPreview.Margin = new Padding(12, 2, 0, 0);
+        btnExportPreview.Click += btnExportPreview_Click;
         //
         // tabSql
         //
@@ -483,7 +500,7 @@ partial class MainForm
         txtSql.Dock = DockStyle.Fill;
         txtSql.Font = new Font("Consolas", 10F, FontStyle.Regular, GraphicsUnit.Point);
         txtSql.Multiline = true;
-        txtSql.ScrollBars = ScrollBars.Both;
+        txtSql.ScrollBars = RichTextBoxScrollBars.Both;
         txtSql.WordWrap = false;
         //
         // sqlButtonPanel
@@ -491,6 +508,7 @@ partial class MainForm
         sqlButtonPanel.Controls.Add(btnRunSql);
         sqlButtonPanel.Controls.Add(btnClearSql);
         sqlButtonPanel.Controls.Add(btnCopySql);
+        sqlButtonPanel.Controls.Add(btnExportResults);
         sqlButtonPanel.Dock = DockStyle.Fill;
         sqlButtonPanel.FlowDirection = FlowDirection.LeftToRight;
         sqlButtonPanel.Padding = new Padding(12, 8, 12, 0);
@@ -506,6 +524,9 @@ partial class MainForm
         btnCopySql.AutoSize = true;
         btnCopySql.Text = "复制 SQL";
         btnCopySql.Click += btnCopySql_Click;
+        btnExportResults.AutoSize = true;
+        btnExportResults.Text = "导出结果";
+        btnExportResults.Click += btnExportResults_Click;
         //
         // gridResults
         //
@@ -515,6 +536,8 @@ partial class MainForm
         gridResults.Dock = DockStyle.Fill;
         gridResults.ReadOnly = true;
         gridResults.RowHeadersVisible = false;
+        gridResults.AllowUserToOrderColumns = true;
+        gridResults.SortCompare += GridResults_SortCompare;
         //
         // lblStatus
         //

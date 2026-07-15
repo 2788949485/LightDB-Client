@@ -9,6 +9,7 @@ public interface IDatabaseProvider
     List<string> GetTables(DbConnectionConfig config, string password);
     List<TableColumnInfo> GetColumns(DbConnectionConfig config, string password, string tableName);
     DataTable ExecuteQuery(DbConnectionConfig config, string password, string sql, int maxRows = 1000);
+    long GetRowCount(DbConnectionConfig config, string password, string tableName);
     string BuildPreviewSql(string tableName, int limit = 100);
     string BuildPagedPreviewSql(string tableName, int page, int pageSize);
     string BuildFilteredPreviewSql(

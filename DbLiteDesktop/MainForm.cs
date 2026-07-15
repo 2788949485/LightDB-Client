@@ -11,16 +11,20 @@ public partial class MainForm : Form
 {
     private const int PreviewPageSize = 100;
     private const string AllFieldsOption = "全部字段";
+
     private readonly ConfigService _configService = new();
     private readonly PasswordEncryptService _passwordEncryptService = new();
-    private readonly SqlGuardService _sqlGuardService = new();
+    // SqlGuardService 改为静态类，无需实例化
+    private readonly DataExportService _dataExportService = new();
     private readonly ContextMenuStrip _previewCopyMenu = new();
     private QueryHistoryService _queryHistoryService = null!;
     private DbConnectionConfig? _currentConfig;
+    private IDatabaseProvider? _currentProvider;
     private string? _currentPreviewTableName;
     private int _currentPreviewPage = 1;
     private List<string> _currentPreviewColumns = [];
     private string _previewCopyText = string.Empty;
+    private bool _isLoading;
 
     public MainForm()
     {
@@ -166,6 +170,7 @@ public partial class MainForm : Form
             var provider = DatabaseProviderFactory.Create(config.DbType);
             provider.TestConnection(config, GetPassword(config));
             _currentConfig = config;
+            _currentProvider = provider;
             LoadTables();
             lblStatus.Text = $"已连接：{config.Name}";
         }
@@ -177,48 +182,83 @@ public partial class MainForm : Form
 
     private void LoadTables()
     {
-        if (_currentConfig is null)
+        if (_currentConfig is null || _currentProvider is null)
         {
             return;
         }
 
-        var provider = DatabaseProviderFactory.Create(_currentConfig.DbType);
-        var tables = provider.GetTables(_currentConfig, GetPassword(_currentConfig));
-
-        treeTables.Nodes.Clear();
-        foreach (var table in tables)
+        SetLoading(true);
+        Task.Run(() =>
         {
-            treeTables.Nodes.Add(table);
-        }
+            try
+            {
+                var tables = _currentProvider.GetTables(_currentConfig, GetPassword(_currentConfig));
+                Invoke(() =>
+                {
+                    treeTables.Nodes.Clear();
+                    foreach (var table in tables)
+                    {
+                        treeTables.Nodes.Add(table);
+                    }
+                    SetLoading(false);
+                });
+            }
+            catch (Exception ex)
+            {
+                Invoke(() =>
+                {
+                    SetLoading(false);
+                    MessageBox.Show(ex.Message, "读取表列表失败");
+                });
+            }
+        });
+    }
+
+    private void SetLoading(bool loading)
+    {
+        _isLoading = loading;
+        lblStatus.Text = loading ? "加载中..." : lblStatus.Text;
+        Cursor = loading ? Cursors.WaitCursor : Cursors.Default;
+        UseWaitCursor = loading;
     }
 
     private void LoadColumnsForTable(string tableName)
     {
-        if (_currentConfig is null)
+        if (_currentConfig is null || _currentProvider is null)
         {
             return;
         }
 
-        try
+        SetLoading(true);
+        Task.Run(() =>
         {
-            var provider = DatabaseProviderFactory.Create(_currentConfig.DbType);
-            var columns = provider.GetColumns(_currentConfig, GetPassword(_currentConfig), tableName);
-
-            gridColumns.DataSource = null;
-            gridColumns.DataSource = columns;
-            _currentPreviewColumns = columns.Select(column => column.Name).Where(name => !string.IsNullOrWhiteSpace(name)).ToList();
-            BindPreviewFields();
-            txtSql.Text = provider.BuildPreviewSql(tableName, 100);
-            _currentPreviewTableName = tableName;
-            _currentPreviewPage = 1;
-            txtPreviewKeyword.Clear();
-            cboPreviewMatch.SelectedIndex = 0;
-            LoadPreviewPage();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(ex.Message, "读取字段失败");
-        }
+            try
+            {
+                var columns = _currentProvider.GetColumns(_currentConfig, GetPassword(_currentConfig), tableName);
+                Invoke(() =>
+                {
+                    gridColumns.DataSource = null;
+                    gridColumns.DataSource = columns;
+                    _currentPreviewColumns = columns.Select(column => column.Name).Where(name => !string.IsNullOrWhiteSpace(name)).ToList();
+                    BindPreviewFields();
+                    txtSql.Text = _currentProvider.BuildPreviewSql(tableName, 100);
+                    _currentPreviewTableName = tableName;
+                    _currentPreviewPage = 1;
+                    txtPreviewKeyword.Clear();
+                    cboPreviewMatch.SelectedIndex = 0;
+                    LoadPreviewPage();
+                    SetLoading(false);
+                });
+            }
+            catch (Exception ex)
+            {
+                Invoke(() =>
+                {
+                    SetLoading(false);
+                    MessageBox.Show(ex.Message, "读取字段失败");
+                });
+            }
+        });
     }
 
     private void BindPreviewFields()
@@ -236,39 +276,51 @@ public partial class MainForm : Form
 
     private void LoadPreviewPage()
     {
-        if (_currentConfig is null || string.IsNullOrWhiteSpace(_currentPreviewTableName))
+        if (_currentConfig is null || _currentProvider is null || string.IsNullOrWhiteSpace(_currentPreviewTableName))
         {
             return;
         }
 
-        try
+        SetLoading(true);
+        Task.Run(() =>
         {
-            var provider = DatabaseProviderFactory.Create(_currentConfig.DbType);
-            var sql = BuildPreviewSql(provider);
-            var result = provider.ExecuteQuery(_currentConfig, GetPassword(_currentConfig), sql, PreviewPageSize);
-
-            // 性能优化：暂停绘制以提高大数据量时的性能
-            gridPreview.SuspendLayout();
             try
             {
-                gridPreview.DataSource = null;
-                gridPreview.DataSource = result;
-                gridPreview.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+                var sql = string.Empty;
+                Invoke(() => { sql = BuildPreviewSql(_currentProvider); });
+
+                var result = _currentProvider.ExecuteQuery(_currentConfig, GetPassword(_currentConfig), sql, PreviewPageSize);
+
+                Invoke(() =>
+                {
+                    gridPreview.SuspendLayout();
+                    try
+                    {
+                        gridPreview.DataSource = null;
+                        gridPreview.DataSource = result;
+                        gridPreview.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+                    }
+                    finally
+                    {
+                        gridPreview.ResumeLayout();
+                    }
+
+                    lblPreviewPage.Text = $"第 {_currentPreviewPage} 页";
+                    btnPrevPage.Enabled = _currentPreviewPage > 1;
+                    btnNextPage.Enabled = result.Rows.Count >= PreviewPageSize;
+                    tabMain.SelectedTab = tabPreview;
+                    SetLoading(false);
+                });
             }
-            finally
+            catch (Exception ex)
             {
-                gridPreview.ResumeLayout();
+                Invoke(() =>
+                {
+                    SetLoading(false);
+                    MessageBox.Show(ex.Message, "加载数据预览失败");
+                });
             }
-            
-            lblPreviewPage.Text = $"第 {_currentPreviewPage} 页";
-            btnPrevPage.Enabled = _currentPreviewPage > 1;
-            btnNextPage.Enabled = result.Rows.Count >= PreviewPageSize;
-            tabMain.SelectedTab = tabPreview;
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(ex.Message, "加载数据预览失败");
-        }
+        });
     }
 
     private string BuildPreviewSql(IDatabaseProvider provider)
@@ -318,76 +370,89 @@ public partial class MainForm : Form
 
     private void RunSql()
     {
-        if (_currentConfig is null)
+        if (_currentConfig is null || _currentProvider is null)
         {
             MessageBox.Show("请先连接数据库。", "提示");
             return;
         }
 
         var sql = txtSql.Text.Trim();
-        if (!_sqlGuardService.IsReadonlySql(sql))
+        if (!SqlGuardService.IsReadonlySql(sql))
         {
             MessageBox.Show("当前工具只允许执行只读 SQL。", "提示");
             return;
         }
 
+        SetLoading(true);
         var startedAt = DateTime.UtcNow;
+        var config = _currentConfig;
+        var provider = _currentProvider;
+        var password = GetPassword(config);
 
-        try
+        Task.Run(() =>
         {
-            var provider = DatabaseProviderFactory.Create(_currentConfig.DbType);
-            var result = provider.ExecuteQuery(_currentConfig, GetPassword(_currentConfig), sql, 1000);
-            var duration = (long)(DateTime.UtcNow - startedAt).TotalMilliseconds;
-
-            // 性能优化：暂停绘制以提高大数据量时的性能
-            gridResults.SuspendLayout();
             try
             {
-                gridResults.DataSource = null;
-                gridResults.DataSource = result;
-                gridResults.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+                var result = provider.ExecuteQuery(config, password, sql, 1000);
+                var duration = (long)(DateTime.UtcNow - startedAt).TotalMilliseconds;
+
+                Invoke(() =>
+                {
+                    gridResults.SuspendLayout();
+                    try
+                    {
+                        gridResults.DataSource = null;
+                        gridResults.DataSource = result;
+                        gridResults.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+                    }
+                    finally
+                    {
+                        gridResults.ResumeLayout();
+                    }
+
+                    lblStatus.Text = $"查询成功，返回 {result.Rows.Count} 行，耗时 {duration} ms";
+
+                    _queryHistoryService.Add(new QueryHistoryItem
+                    {
+                        ConnectionId = config.Id,
+                        DbType = config.DbType,
+                        DatabaseName = GetDisplayDatabaseName(config),
+                        SqlText = sql,
+                        Success = true,
+                        DurationMs = duration,
+                        RowCount = result.Rows.Count
+                    });
+
+                    LoadHistory();
+                    tabMain.SelectedTab = tabSql;
+                    SetLoading(false);
+                });
             }
-            finally
+            catch (Exception ex)
             {
-                gridResults.ResumeLayout();
+                var duration = (long)(DateTime.UtcNow - startedAt).TotalMilliseconds;
+                Invoke(() =>
+                {
+                    lblStatus.Text = $"查询失败：{ex.Message}";
+
+                    _queryHistoryService.Add(new QueryHistoryItem
+                    {
+                        ConnectionId = config.Id,
+                        DbType = config.DbType,
+                        DatabaseName = GetDisplayDatabaseName(config),
+                        SqlText = sql,
+                        Success = false,
+                        ErrorMessage = ex.Message,
+                        DurationMs = duration,
+                        RowCount = 0
+                    });
+
+                    LoadHistory();
+                    SetLoading(false);
+                    MessageBox.Show(ex.Message, "查询失败");
+                });
             }
-            
-            lblStatus.Text = $"查询成功，返回 {result.Rows.Count} 行，耗时 {duration} ms";
-
-            _queryHistoryService.Add(new QueryHistoryItem
-            {
-                ConnectionId = _currentConfig.Id,
-                DbType = _currentConfig.DbType,
-                DatabaseName = GetDisplayDatabaseName(_currentConfig),
-                SqlText = sql,
-                Success = true,
-                DurationMs = duration,
-                RowCount = result.Rows.Count
-            });
-
-            LoadHistory();
-            tabMain.SelectedTab = tabSql;
-        }
-        catch (Exception ex)
-        {
-            var duration = (long)(DateTime.UtcNow - startedAt).TotalMilliseconds;
-            lblStatus.Text = $"查询失败：{ex.Message}";
-
-            _queryHistoryService.Add(new QueryHistoryItem
-            {
-                ConnectionId = _currentConfig.Id,
-                DbType = _currentConfig.DbType,
-                DatabaseName = GetDisplayDatabaseName(_currentConfig),
-                SqlText = sql,
-                Success = false,
-                ErrorMessage = ex.Message,
-                DurationMs = duration,
-                RowCount = 0
-            });
-
-            LoadHistory();
-            MessageBox.Show(ex.Message, "查询失败");
-        }
+        });
     }
 
     private string GetPassword(DbConnectionConfig config)
@@ -405,6 +470,7 @@ public partial class MainForm : Form
     private void Disconnect()
     {
         _currentConfig = null;
+        _currentProvider = null;
         _currentPreviewTableName = null;
         _currentPreviewPage = 1;
         _currentPreviewColumns = [];
@@ -420,8 +486,16 @@ public partial class MainForm : Form
         cboPreviewField.SelectedIndex = 0;
     }
 
+    private bool _themeApplied;
+
     private void ApplyTheme()
     {
+        if (_themeApplied)
+        {
+            return;
+        }
+
+        _themeApplied = true;
         var pageBackColor = Color.FromArgb(245, 247, 250);
         var cardBackColor = Color.White;
         var chromeBackColor = Color.FromArgb(251, 252, 253);
@@ -544,7 +618,10 @@ public partial class MainForm : Form
         StyleActionButton(btnApplyPreviewFilter, accentColor);
         StyleGhostButton(btnClearSql);
         StyleGhostButton(btnCopySql);
+        StyleGhostButton(btnExportResults);
         StyleGhostButton(btnResetPreviewFilter);
+        StyleGhostButton(btnRowCount);
+        StyleGhostButton(btnExportPreview);
 
         lblStatus.BackColor = chromeBackColor;
         lblStatus.ForeColor = subtleTextColor;
@@ -581,11 +658,8 @@ public partial class MainForm : Form
         StyleComboBox(cboPreviewField);
         StyleComboBox(cboPreviewMatch);
         StyleTextInput(txtPreviewKeyword);
-        StyleTextInput(txtSql);
-        txtSql.BackColor = chromeBackColor;
-        txtSql.ForeColor = textColor;
-        txtSql.BorderStyle = BorderStyle.FixedSingle;
-        txtSql.Margin = new Padding(0, 0, 0, 10);
+        txtSql.ApplyTheme();
+        txtSql.PlaceholderText = "请输入只读 SQL，例如：SELECT * FROM your_table LIMIT 100";
 
         AlignPreviewSearchControls();
     }
@@ -904,6 +978,45 @@ public partial class MainForm : Form
         RunSql();
     }
 
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        // Ctrl+Enter: 执行 SQL
+        if (keyData == (Keys.Control | Keys.Enter))
+        {
+            RunSql();
+            return true;
+        }
+
+        // F5: 刷新表列表
+        if (keyData == Keys.F5)
+        {
+            if (_currentConfig is not null)
+            {
+                LoadTables();
+            }
+            else
+            {
+                LoadConnections();
+                LoadHistory();
+            }
+            return true;
+        }
+
+        // Escape: 清空搜索框
+        if (keyData == Keys.Escape)
+        {
+            if (tabMain.SelectedTab == tabPreview)
+            {
+                txtPreviewKeyword.Clear();
+                cboPreviewField.SelectedIndex = 0;
+                cboPreviewMatch.SelectedIndex = 0;
+            }
+            return true;
+        }
+
+        return base.ProcessCmdKey(ref msg, keyData);
+    }
+
     private void btnClearSql_Click(object? sender, EventArgs e)
     {
         txtSql.Clear();
@@ -998,4 +1111,99 @@ public partial class MainForm : Form
         }
     }
 
+    private void btnExportResults_Click(object? sender, EventArgs e)
+    {
+        ExportGridData(gridResults, "查询结果");
+    }
+
+    private void GridResults_SortCompare(object? sender, DataGridViewSortCompareEventArgs e)
+    {
+        if (decimal.TryParse(e.CellValue1?.ToString(), out var n1) &&
+            decimal.TryParse(e.CellValue2?.ToString(), out var n2))
+        {
+            e.SortResult = n1.CompareTo(n2);
+        }
+        else
+        {
+            e.SortResult = string.Compare(
+                e.CellValue1?.ToString(),
+                e.CellValue2?.ToString(),
+                StringComparison.Ordinal
+            );
+        }
+        e.Handled = true;
+    }
+
+    private void btnExportPreview_Click(object? sender, EventArgs e)
+    {
+        ExportGridData(gridPreview, "数据预览");
+    }
+
+    private void ExportGridData(DataGridView grid, string defaultFileName)
+    {
+        if (grid.DataSource is not DataTable table || table.Rows.Count == 0)
+        {
+            MessageBox.Show("没有可导出的数据。", "提示");
+            return;
+        }
+
+        using var dialog = new SaveFileDialog
+        {
+            FileName = $"{defaultFileName}_{DateTime.Now:yyyyMMdd_HHmmss}",
+            Filter = "CSV 文件|*.csv|JSON 文件|*.json",
+            DefaultExt = "csv"
+        };
+
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        try
+        {
+            var format = dialog.FilterIndex == 2
+                ? DataExportService.ExportFormat.Json
+                : DataExportService.ExportFormat.Csv;
+
+            _dataExportService.Export(table, dialog.FileName, format);
+            MessageBox.Show($"导出成功：{dialog.FileName}", "提示");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(ex.Message, "导出失败");
+        }
+    }
+
+    private void btnRowCount_Click(object? sender, EventArgs e)
+    {
+        if (_currentConfig is null || _currentProvider is null || string.IsNullOrWhiteSpace(_currentPreviewTableName))
+        {
+            MessageBox.Show("请先选择表。", "提示");
+            return;
+        }
+
+        var tableName = _currentPreviewTableName;
+        SetLoading(true);
+
+        Task.Run(() =>
+        {
+            try
+            {
+                var count = _currentProvider.GetRowCount(_currentConfig, GetPassword(_currentConfig), tableName);
+                Invoke(() =>
+                {
+                    SetLoading(false);
+                    lblStatus.Text = $"表 {tableName} 共 {count:N0} 行";
+                });
+            }
+            catch (Exception ex)
+            {
+                Invoke(() =>
+                {
+                    SetLoading(false);
+                    MessageBox.Show(ex.Message, "行数统计失败");
+                });
+            }
+        });
+    }
 }

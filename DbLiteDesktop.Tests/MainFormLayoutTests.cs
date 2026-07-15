@@ -27,17 +27,28 @@ public class MainFormLayoutTests
                 tabMain.SelectedTab = GetField<TabPage>(form, "tabPreview");
                 form.PerformLayout();
 
+                // 检查 header 区域控件（始终可见）
                 foreach (var name in new[]
                 {
                     "btnNewConnection", "btnEditConnection", "btnDeleteConnection",
-                    "btnTestConnection", "btnConnect", "btnRefresh", "btnDisconnect",
+                    "btnTestConnection", "btnConnect", "btnRefresh", "btnDisconnect"
+                })
+                {
+                    var control = GetField<Control>(form, name);
+                    Assert.True(control.Top >= 0, $"{name} 顶部超出容器");
+                    Assert.True(control.Bottom <= control.Parent!.ClientSize.Height, $"{name} 底部超出容器");
+                }
+
+                // 检查 preview tab 控件
+                foreach (var name in new[]
+                {
                     "cboPreviewField", "cboPreviewMatch", "txtPreviewKeyword",
                     "btnApplyPreviewFilter", "btnResetPreviewFilter"
                 })
                 {
                     var control = GetField<Control>(form, name);
                     Assert.True(control.Top >= 0, $"{name} 顶部超出容器");
-                    Assert.True(control.Bottom <= control.Parent!.ClientSize.Height, $"{name} 底部超出容器");
+                    Assert.True(control.Bottom <= control.Parent!.ClientSize.Height, $"{name} 底部超出容器 (Top={control.Top}, Bottom={control.Bottom}, ParentH={control.Parent!.ClientSize.Height})");
                 }
             }
             catch (Exception exception)

@@ -11,4 +11,9 @@ public static class IdentifierQuoteHelper
     {
         return $"\"{name.Replace("\"", "\"\"")}\"";
     }
+
+    public static string QuotePostgres(string name)
+    {
+        return $"\"{name.Replace("\"", "\"\"")}\"";
+    }
 }

@@ -8,6 +8,8 @@ namespace DbLiteDesktop.Providers;
 
 public class SQLiteProvider : IDatabaseProvider
 {
+    private static readonly Func<string, string> Quote = IdentifierQuoteHelper.QuoteSQLite;
+
     public bool TestConnection(DbConnectionConfig config, string password)
     {
         using var connection = CreateConnection(config);
@@ -47,7 +49,7 @@ public class SQLiteProvider : IDatabaseProvider
         connection.Open();
 
         using var command = connection.CreateCommand();
-        command.CommandText = $"PRAGMA table_info({IdentifierQuoteHelper.QuoteSQLite(tableName)});";
+        command.CommandText = $"PRAGMA table_info({Quote(tableName)});";
 
         using var reader = command.ExecuteReader();
         var items = new List<TableColumnInfo>();
@@ -71,8 +73,7 @@ public class SQLiteProvider : IDatabaseProvider
 
     public DataTable ExecuteQuery(DbConnectionConfig config, string password, string sql, int maxRows = 1000)
     {
-        var guard = new SqlGuardService();
-        if (!guard.IsReadonlySql(sql))
+        if (!SqlGuardService.IsReadonlySql(sql))
         {
             throw new InvalidOperationException("当前工具只允许执行只读 SQL");
         }
@@ -82,27 +83,30 @@ public class SQLiteProvider : IDatabaseProvider
 
         using var command = connection.CreateCommand();
         command.CommandText = sql;
-        command.CommandTimeout = 30;
+        command.CommandTimeout = config.CommandTimeoutSec ?? 30;
 
         using var reader = command.ExecuteReader();
         var table = new DataTable();
         table.Load(reader);
-        TrimRows(table, maxRows);
+        ProviderHelper.TrimRows(table, maxRows);
         return table;
     }
 
-    public string BuildPreviewSql(string tableName, int limit = 100)
+    public string BuildPreviewSql(string tableName, int limit = 100) =>
+        ProviderHelper.BuildPreviewSql(tableName, Quote, limit);
+
+    public long GetRowCount(DbConnectionConfig config, string password, string tableName)
     {
-        return $"SELECT * FROM {IdentifierQuoteHelper.QuoteSQLite(tableName)} LIMIT {limit};";
+        using var connection = CreateConnection(config);
+        connection.Open();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT COUNT(*) FROM {Quote(tableName)};";
+        return Convert.ToInt64(command.ExecuteScalar());
     }
 
-    public string BuildPagedPreviewSql(string tableName, int page, int pageSize)
-    {
-        var safePage = Math.Max(page, 1);
-        var safePageSize = Math.Max(pageSize, 1);
-        var offset = (safePage - 1) * safePageSize;
-        return $"SELECT * FROM {IdentifierQuoteHelper.QuoteSQLite(tableName)} LIMIT {safePageSize} OFFSET {offset};";
-    }
+    public string BuildPagedPreviewSql(string tableName, int page, int pageSize) =>
+        ProviderHelper.BuildPagedPreviewSql(tableName, page, pageSize, Quote);
 
     public string BuildFilteredPreviewSql(
         string tableName,
@@ -112,35 +116,10 @@ public class SQLiteProvider : IDatabaseProvider
         bool exactMatch,
         int page,
         int pageSize
-    )
-    {
-        var safePage = Math.Max(page, 1);
-        var safePageSize = Math.Max(pageSize, 1);
-        var offset = (safePage - 1) * safePageSize;
-        var escapedKeyword = keyword.Replace("'", "''");
-        var operatorText = exactMatch ? "=" : "LIKE";
-        var valueText = exactMatch ? $"'{escapedKeyword}'" : $"'%{escapedKeyword}%'";
-        var targetColumns = string.IsNullOrWhiteSpace(selectedColumn)
-            ? columns
-            : columns.Where(column => string.Equals(column, selectedColumn, StringComparison.OrdinalIgnoreCase)).ToList();
-
-        var conditions = targetColumns
-            .Select(column => $"CAST({IdentifierQuoteHelper.QuoteSQLite(column)} AS TEXT) {operatorText} {valueText}");
-
-        return
-            $"SELECT * FROM {IdentifierQuoteHelper.QuoteSQLite(tableName)} WHERE {string.Join(" OR ", conditions)} LIMIT {safePageSize} OFFSET {offset};";
-    }
+    ) => ProviderHelper.BuildFilteredPreviewSql(tableName, columns, selectedColumn, keyword, exactMatch, page, pageSize, Quote, "TEXT");
 
     private static SqliteConnection CreateConnection(DbConnectionConfig config)
     {
         return new($"Data Source={config.FilePath}");
-    }
-
-    private static void TrimRows(DataTable table, int maxRows)
-    {
-        while (table.Rows.Count > maxRows)
-        {
-            table.Rows.RemoveAt(table.Rows.Count - 1);
-        }
     }
 }

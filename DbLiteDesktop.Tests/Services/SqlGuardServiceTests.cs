@@ -5,7 +5,7 @@ namespace DbLiteDesktop.Tests.Services;
 
 public class SqlGuardServiceTests
 {
-    private readonly SqlGuardService _service = new();
+    // SqlGuardService is now a static class
 
     [Theory]
     [InlineData("select * from users")]
@@ -14,7 +14,7 @@ public class SqlGuardServiceTests
     [InlineData("pragma table_info(\"users\")")]
     public void IsReadonlySql_Allows_ReadonlySql(string sql)
     {
-        Assert.True(_service.IsReadonlySql(sql));
+        Assert.True(SqlGuardService.IsReadonlySql(sql));
     }
 
     [Theory]
@@ -26,6 +26,6 @@ public class SqlGuardServiceTests
     [InlineData("update users set name = 'x'")]
     public void IsReadonlySql_Rejects_DangerousSql(string sql)
     {
-        Assert.False(_service.IsReadonlySql(sql));
+        Assert.False(SqlGuardService.IsReadonlySql(sql));
     }
 }

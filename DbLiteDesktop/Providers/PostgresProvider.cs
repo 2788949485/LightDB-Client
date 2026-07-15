@@ -2,20 +2,20 @@ using System.Data;
 using DbLiteDesktop.Models;
 using DbLiteDesktop.Services;
 using DbLiteDesktop.Utils;
-using MySqlConnector;
+using Npgsql;
 
 namespace DbLiteDesktop.Providers;
 
-public class MySqlProvider : IDatabaseProvider
+public class PostgresProvider : IDatabaseProvider
 {
-    private static readonly Func<string, string> Quote = IdentifierQuoteHelper.QuoteMySql;
+    private static readonly Func<string, string> Quote = IdentifierQuoteHelper.QuotePostgres;
 
     public bool TestConnection(DbConnectionConfig config, string password)
     {
         using var connection = CreateConnection(config, password);
         connection.Open();
 
-        using var command = new MySqlCommand("SELECT 1;", connection);
+        using var command = new NpgsqlCommand("SELECT 1;", connection);
         return command.ExecuteScalar() is not null;
     }
 
@@ -24,7 +24,16 @@ public class MySqlProvider : IDatabaseProvider
         using var connection = CreateConnection(config, password);
         connection.Open();
 
-        using var command = new MySqlCommand("SHOW TABLES;", connection);
+        using var command = new NpgsqlCommand(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
+              AND table_type = 'BASE TABLE'
+            ORDER BY table_name;
+            """,
+            connection
+        );
         using var reader = command.ExecuteReader();
         var items = new List<string>();
 
@@ -41,10 +50,18 @@ public class MySqlProvider : IDatabaseProvider
         using var connection = CreateConnection(config, password);
         connection.Open();
 
-        using var command = new MySqlCommand(
-            $"SHOW FULL COLUMNS FROM {Quote(tableName)};",
+        using var command = new NpgsqlCommand(
+            """
+            SELECT column_name, data_type, is_nullable, column_default,
+                   col_description((table_schema || '.' || table_name)::regclass, ordinal_position) AS comment
+            FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = $1
+            ORDER BY ordinal_position;
+            """,
             connection
         );
+        command.Parameters.AddWithValue(tableName);
+
         using var reader = command.ExecuteReader();
         var items = new List<TableColumnInfo>();
 
@@ -52,13 +69,12 @@ public class MySqlProvider : IDatabaseProvider
         {
             items.Add(new TableColumnInfo
             {
-                Name = reader["Field"]?.ToString() ?? string.Empty,
-                Type = reader["Type"]?.ToString() ?? string.Empty,
-                Nullable = reader["Null"]?.ToString() ?? string.Empty,
-                Key = reader["Key"]?.ToString() ?? string.Empty,
-                DefaultValue = reader["Default"]?.ToString(),
-                Extra = reader["Extra"]?.ToString(),
-                Comment = reader["Comment"]?.ToString()
+                Name = reader["column_name"]?.ToString() ?? string.Empty,
+                Type = reader["data_type"]?.ToString() ?? string.Empty,
+                Nullable = reader["is_nullable"]?.ToString() ?? string.Empty,
+                DefaultValue = reader["column_default"]?.ToString(),
+                Extra = string.Empty,
+                Comment = reader["comment"]?.ToString()
             });
         }
 
@@ -75,7 +91,7 @@ public class MySqlProvider : IDatabaseProvider
         using var connection = CreateConnection(config, password);
         connection.Open();
 
-        using var command = new MySqlCommand(sql, connection)
+        using var command = new NpgsqlCommand(sql, connection)
         {
             CommandTimeout = config.CommandTimeoutSec ?? 30
         };
@@ -87,20 +103,20 @@ public class MySqlProvider : IDatabaseProvider
         return table;
     }
 
-    public string BuildPreviewSql(string tableName, int limit = 100) =>
-        ProviderHelper.BuildPreviewSql(tableName, Quote, limit);
-
     public long GetRowCount(DbConnectionConfig config, string password, string tableName)
     {
         using var connection = CreateConnection(config, password);
         connection.Open();
 
-        using var command = new MySqlCommand(
+        using var command = new NpgsqlCommand(
             $"SELECT COUNT(*) FROM {Quote(tableName)};",
             connection
         );
         return Convert.ToInt64(command.ExecuteScalar());
     }
+
+    public string BuildPreviewSql(string tableName, int limit = 100) =>
+        ProviderHelper.BuildPreviewSql(tableName, Quote, limit);
 
     public string BuildPagedPreviewSql(string tableName, int page, int pageSize) =>
         ProviderHelper.BuildPagedPreviewSql(tableName, page, pageSize, Quote);
@@ -113,23 +129,22 @@ public class MySqlProvider : IDatabaseProvider
         bool exactMatch,
         int page,
         int pageSize
-    ) => ProviderHelper.BuildFilteredPreviewSql(tableName, columns, selectedColumn, keyword, exactMatch, page, pageSize, Quote, "CHAR");
+    ) => ProviderHelper.BuildFilteredPreviewSql(tableName, columns, selectedColumn, keyword, exactMatch, page, pageSize, Quote, "TEXT", "ILIKE");
 
-    private static MySqlConnection CreateConnection(DbConnectionConfig config, string password)
+    private static NpgsqlConnection CreateConnection(DbConnectionConfig config, string password)
     {
-        var builder = new MySqlConnectionStringBuilder
+        var builder = new NpgsqlConnectionStringBuilder
         {
-            Server = config.Host,
-            Port = (uint)(config.Port ?? 3306),
+            Host = config.Host ?? "localhost",
+            Port = config.Port ?? 5432,
             Database = config.DatabaseName,
-            UserID = config.Username,
+            Username = config.Username,
             Password = password,
-            CharacterSet = "utf8mb4",
-            ConnectionTimeout = (uint)(config.ConnectionTimeoutSec ?? 10),
-            DefaultCommandTimeout = (uint)(config.CommandTimeoutSec ?? 30),
+            Timeout = config.ConnectionTimeoutSec ?? 10,
+            CommandTimeout = config.CommandTimeoutSec ?? 30,
             Pooling = true,
-            MinimumPoolSize = 1,
-            MaximumPoolSize = 10
+            MinPoolSize = 1,
+            MaxPoolSize = 10
         };
 
         return new(builder.ConnectionString);
